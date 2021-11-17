@@ -67,12 +67,3 @@ async def dump_all_messages(channel):
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder)
 
-
-async def main():
-    url = input("Введите ссылку на канал или чат: ")
-    channel = await client.get_entity(url)
-    await dump_all_messages(channel)
-
-
-with client:
-    client.loop.run_until_complete(main())
