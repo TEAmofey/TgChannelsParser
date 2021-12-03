@@ -23,7 +23,7 @@ api_id = config['Telegram']['api_id']
 api_hash = config['Telegram']['api_hash']
 username = config['Telegram']['username']
 
-client = TelegramClient(username, api_id, api_hash)
+client = TelegramClient(username, int(api_id), api_hash)
 
 client.start()
 
@@ -38,7 +38,7 @@ async def dump_all_messages(channel):
     total_count_limit = 0  # поменяйте это значение, если вам нужны не все сообщения
 
     class DateTimeEncoder(json.JSONEncoder):
-        '''Класс для сериализации записи дат в JSON'''
+        """Класс для сериализации записи дат в JSON"""
 
         def default(self, o):
             if isinstance(o, datetime):
@@ -66,4 +66,3 @@ async def dump_all_messages(channel):
 
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder)
-
