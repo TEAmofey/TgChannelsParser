@@ -1,5 +1,5 @@
-from TgParser import client
-from TgParser import dump_all_messages
+from tg_parser import client
+from tg_parser import dump_all_messages
 
 
 async def main():
