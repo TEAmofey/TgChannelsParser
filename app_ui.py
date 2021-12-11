@@ -89,11 +89,22 @@ class MainWindow(QMainWindow):
 
         # Texts (Date intervals instruction)
         self.text_date_interval = QtWidgets.QLabel(self)
+        self.text_date_from = QtWidgets.QLabel(self)
+        self.text_date_to = QtWidgets.QLabel(self)
+        self.create_date_descriptions()
 
         # Date fields
         self.date_field_from = QtWidgets.QDateEdit(self)
         self.date_field_to = QtWidgets.QDateEdit(self)
         self.create_date_fields()
+
+        # # Calendar
+        # self.calendar = QtWidgets.QCalendarWidget(self)
+        # self.create_calendar()
+
+        # Button (Start)
+        self.button_start = QtWidgets.QPushButton(self)
+        self.create_button_start()
 
         # ----- Shortcuts -----
 
@@ -132,9 +143,9 @@ class MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(self, _translate("MainWindow", "Telegram search"))
         self.button_add_link.setText(_translate("MainWindow", "Добавить"))
-        self.menu_file.setTitle(_translate("MainWindow", "File"))
-        self.action_edit.setText(_translate("MainWindow", "Settings"))
-        self.action_exit.setText(_translate("MainWindow", "Exit"))
+        self.menu_file.setTitle(_translate("MainWindow", "Меню"))
+        self.action_edit.setText(_translate("MainWindow", "Настройки"))
+        self.action_exit.setText(_translate("MainWindow", "Выход"))
 
     def create_button_add_link(self):
         self.button_add_link.setGeometry(QtCore.QRect(538, 75, 80, 35))
@@ -159,6 +170,11 @@ class MainWindow(QMainWindow):
         self.button_delete_chosen.setFont(self.main_font_small)
         self.button_delete_chosen.clicked.connect(self.delete_chosen)
 
+    def create_button_start(self):
+        self.button_start.setGeometry(QtCore.QRect(850, 400, 175, 50))
+        self.button_start.setText("Начать поиск")
+        self.button_start.setFont(self.main_font_big)
+
     def create_insert_link_field(self):
         self.insert_link.setGeometry(QtCore.QRect(78, 75, 450, 35))
         self.insert_link.setObjectName("plainTextEdit")
@@ -167,14 +183,14 @@ class MainWindow(QMainWindow):
         self.insert_link.setPlaceholderText("Введите ссылку на telegram-канал")
 
     def create_insert_key_word_field(self):
-        self.insert_key_word.setGeometry(QtCore.QRect(741, 75, 450, 35))
+        self.insert_key_word.setGeometry(QtCore.QRect(741, 150, 450, 35))
         self.insert_key_word.setObjectName("plainTextEditKeyWord")
         self.insert_key_word.setFont(self.main_font_medium)
         self.insert_key_word.setMaximumBlockCount(1)
         self.insert_key_word.setPlaceholderText("Введите ключевые слова")
 
     def create_button_help(self):
-        self.button_show_help.setGeometry(QtCore.QRect(1200, 75, 30, 35))
+        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
         self.button_show_help.setObjectName("pushButton")
         self.button_show_help.setText("?")
         self.button_show_help.setFont(self.main_font_big)
@@ -194,14 +210,34 @@ class MainWindow(QMainWindow):
 
     def create_date_fields(self):
         # From
-        self.date_field_from.setGeometry(QtCore.QRect(820, 150, 125, 30))
+        self.date_field_from.setGeometry(QtCore.QRect(900, 275, 125, 30))
         self.date_field_from.setFont(self.main_font_big)
         self.date_field_from.setDateTime(QtCore.QDateTime.currentDateTime())
 
         # To
-        self.date_field_to.setGeometry(QtCore.QRect(820, 200, 125, 30))
+        self.date_field_to.setGeometry(QtCore.QRect(900, 325, 125, 30))
         self.date_field_to.setFont(self.main_font_big)
         self.date_field_to.setDateTime(QtCore.QDateTime.currentDateTime())
+
+    def create_date_descriptions(self):
+        self.text_date_interval.setText("Выберите диапазон поиска:")
+        self.text_date_interval.setFont(self.main_font_big)
+        self.text_date_interval.setGeometry(QtCore.QRect(820, 225, 100, 100))
+        self.text_date_interval.adjustSize()
+
+        self.text_date_from.setText("От:")
+        self.text_date_from.setFont(self.main_font_big)
+        self.text_date_from.setGeometry(QtCore.QRect(850, 277, 10, 10))
+        self.text_date_from.adjustSize()
+
+        self.text_date_to.setText("До:")
+        self.text_date_to.setFont(self.main_font_big)
+        self.text_date_to.setGeometry(QtCore.QRect(850, 327, 10, 10))
+        self.text_date_to.adjustSize()
+
+    def create_calendar(self):
+        self.calendar.setGeometry(QtCore.QRect(820, 300, 200, 200))
+        self.calendar.adjustSize()
 
     def create_menu_bar(self):
         self.menu_bar.setGeometry(QtCore.QRect(0, 0, 978, 26))
