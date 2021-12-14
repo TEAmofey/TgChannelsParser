@@ -13,22 +13,24 @@ def create_check_box(condition):
     check_box.setFixedHeight(27)
     check_box.setStyleSheet('''
         QCheckBox::indicator {
-            width: 25px;
-            height: 25px;
-            background-color: white;
-            border: 1px solid black;
+            width: 23px;
+            height: 23px;
+            
+            border: 2px solid black;
+            border-radius: 4px;
         }
 
         QCheckBox::indicator:hover {
-            border: 1px solid gray;
+            border: 2px solid gray;
         }
 
-        QCheckBox::indicator:checked {
+        QCheckBox::indicator:checked {  
             background-color: #66ff66;
         }
         ''')
     layout = QtWidgets.QHBoxLayout(widget_check_box)
     layout.addWidget(check_box)
+
     layout.setAlignment(QtCore.Qt.AlignCenter)
     layout.setContentsMargins(0, 0, 0, 0)
     return widget_check_box
@@ -147,6 +149,26 @@ class MainWindow(QMainWindow):
         self.action_edit.setText(_translate("MainWindow", "Настройки"))
         self.action_exit.setText(_translate("MainWindow", "Выход"))
 
+    # Text fields
+
+    def create_date_descriptions(self):
+        self.text_date_interval.setText("Выберите диапазон поиска:")
+        self.text_date_interval.setFont(self.main_font_big)
+        self.text_date_interval.setGeometry(QtCore.QRect(820, 225, 100, 100))
+        self.text_date_interval.adjustSize()
+
+        self.text_date_from.setText("От:")
+        self.text_date_from.setFont(self.main_font_big)
+        self.text_date_from.setGeometry(QtCore.QRect(850, 277, 10, 10))
+        self.text_date_from.adjustSize()
+
+        self.text_date_to.setText("До:")
+        self.text_date_to.setFont(self.main_font_big)
+        self.text_date_to.setGeometry(QtCore.QRect(850, 327, 10, 10))
+        self.text_date_to.adjustSize()
+
+    # Buttons
+
     def create_button_add_link(self):
         self.button_add_link.setGeometry(QtCore.QRect(538, 75, 80, 35))
         self.button_add_link.setObjectName("pushButton")
@@ -175,6 +197,15 @@ class MainWindow(QMainWindow):
         self.button_start.setText("Начать поиск")
         self.button_start.setFont(self.main_font_big)
 
+    def create_button_help(self):
+        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
+        self.button_show_help.setObjectName("pushButton")
+        self.button_show_help.setText("?")
+        self.button_show_help.setFont(self.main_font_big)
+        self.button_show_help.clicked.connect(self.show_help)
+
+    # Insert fields
+
     def create_insert_link_field(self):
         self.insert_link.setGeometry(QtCore.QRect(78, 75, 450, 35))
         self.insert_link.setObjectName("plainTextEdit")
@@ -189,12 +220,7 @@ class MainWindow(QMainWindow):
         self.insert_key_word.setMaximumBlockCount(1)
         self.insert_key_word.setPlaceholderText("Введите ключевые слова")
 
-    def create_button_help(self):
-        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
-        self.button_show_help.setObjectName("pushButton")
-        self.button_show_help.setText("?")
-        self.button_show_help.setFont(self.main_font_big)
-        self.button_show_help.clicked.connect(self.show_help)
+    # Table
 
     def create_table_links(self):
         self.table_links.setGeometry(QtCore.QRect(50, 150, 601, 500))
@@ -208,6 +234,8 @@ class MainWindow(QMainWindow):
         self.table_links.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
         self.table_links.setSelectionMode(QtWidgets.QTableWidget.NoSelection)
 
+    # Date fields
+
     def create_date_fields(self):
         # From
         self.date_field_from.setGeometry(QtCore.QRect(900, 275, 125, 30))
@@ -219,25 +247,7 @@ class MainWindow(QMainWindow):
         self.date_field_to.setFont(self.main_font_big)
         self.date_field_to.setDateTime(QtCore.QDateTime.currentDateTime())
 
-    def create_date_descriptions(self):
-        self.text_date_interval.setText("Выберите диапазон поиска:")
-        self.text_date_interval.setFont(self.main_font_big)
-        self.text_date_interval.setGeometry(QtCore.QRect(820, 225, 100, 100))
-        self.text_date_interval.adjustSize()
-
-        self.text_date_from.setText("От:")
-        self.text_date_from.setFont(self.main_font_big)
-        self.text_date_from.setGeometry(QtCore.QRect(850, 277, 10, 10))
-        self.text_date_from.adjustSize()
-
-        self.text_date_to.setText("До:")
-        self.text_date_to.setFont(self.main_font_big)
-        self.text_date_to.setGeometry(QtCore.QRect(850, 327, 10, 10))
-        self.text_date_to.adjustSize()
-
-    def create_calendar(self):
-        self.calendar.setGeometry(QtCore.QRect(820, 300, 200, 200))
-        self.calendar.adjustSize()
+    # Menu
 
     def create_menu_bar(self):
         self.menu_bar.setGeometry(QtCore.QRect(0, 0, 978, 26))
@@ -285,11 +295,21 @@ class MainWindow(QMainWindow):
         self.table_links.setRowCount(max(self.begin_row_quantity, self.row_counter))
 
     def show_help(self):
-        print("Help")
+        label = QtWidgets.QLabel()
+        label.setText("Hello")
+        label.setGeometry(QtCore.QRect(100, 100, 100, 100))
+        label.show()
 
     def close_app(self):
         self.close()
 
+
+class HelpWindow(QMainWindow):
+    def __init__(self):
+        super(HelpWindow, self).__init__()
+
+        self.label = QtWidgets.QLabel(self)
+        self.label.setText("Hello")
 
 def application():
     app = QApplication(sys.argv)
