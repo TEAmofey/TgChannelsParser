@@ -1,5 +1,9 @@
 import pymorphy2
 import re
+import datetime
+
+from tg_parser import dump_all_messages, client
+from parse_json import parse
 
 # Создаем объект класса-анализатора
 morph = pymorphy2.MorphAnalyzer()
@@ -8,7 +12,7 @@ morph = pymorphy2.MorphAnalyzer()
 
 
 # пробуем просклонять в единственное число и именительный падеж
-# если просклонять не удалось, morph вернет None 
+# если просклонять не удалось, morph вернет None
 # если вернулось не None, то вернем получившееся слово, иначе -- исходное
 def normalize_word(word):
     normalizedWord = morph.parse(word)[0].inflect({"sing", "nomn"})
@@ -43,7 +47,7 @@ def normalize_request(req):
         1. в пользовательском запросе должно выполняться правило: один оператор -- два операнда (слова),
         то есть, если нужно искать "президент Казахстана", то запрос должен иметь следующий вид:
         президент & Казахстана
-        иначе, при вводе "президент Казахстана", поиск будет производиться по "президентказахстана" 
+        иначе, при вводе "президент Казахстана", поиск будет производиться по "президентказахстана"
     """
     req = req.replace(' ', '')  # сначала убираем из запроса все пробелы
     req = req.replace('&', " and ")  # меняем операторы "и" и "или" на то, что сможет считать питон
@@ -86,3 +90,34 @@ def is_suitable(request, message):
     res = None
     exec(request)
     return res
+
+''' Функция поиска запроса по списку каналов. Возвращает словарь  вида
+    {"channel" : posts}, где posts -- массив всех подходящих постов,
+    каждый из которых представлен в виде словаря {"message": msg, "date": time_stamp} '''
+
+def search(request, channels):
+    logs_suc = open("logs_suc.txt", 'w')
+    logs_err = open("logs_err.txt", 'w')
+    request = normalize_request(request)
+    result = []
+    for channel in channels:
+        try:
+            channel_obj = await client.get_entity(channel)
+            await dump_all_messages(channel_obj)
+            suitable_messages = []
+            posts = parse("channel_messages.json")
+
+            for post in posts:
+                msg = post["msg"]
+                if is_suitable(request, msg):
+                    suitable_messages.append(post)
+            if suitable_messages:
+                result.append({"channel" : suitable_messages})
+                logs_suc.write("На канале {} найдено {} сообщений, удовлетворяющих запросу \n".format(channel, len(suitable_messages)))
+            else:
+                logs_suc.write("На канале {} не найдено сообщений, удовлетворяющих запросу \n".format(channel))
+        except:
+            logs_err.write("Канал {} не найден. Запрос от {} \n".format(channel, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    logs_suc.close()
+    logs_err.close()
+    return result
