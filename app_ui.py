@@ -15,7 +15,7 @@ def create_check_box(condition):
         QCheckBox::indicator {
             width: 23px;
             height: 23px;
-            
+
             border: 2px solid black;
             border-radius: 4px;
         }
@@ -196,6 +196,7 @@ class MainWindow(QMainWindow):
         self.button_start.setGeometry(QtCore.QRect(850, 400, 175, 50))
         self.button_start.setText("Начать поиск")
         self.button_start.setFont(self.main_font_big)
+        self.button_start.clicked.connect(self.collect_channels)
 
     def create_button_help(self):
         self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
@@ -303,6 +304,15 @@ class MainWindow(QMainWindow):
     def close_app(self):
         self.close()
 
+    # Backend connection
+
+    def collect_channels(self):
+        channels = []
+        for row in range(self.row_counter):
+            if self.table_links.cellWidget(row, 1).layout().itemAt(0).widget().isChecked():
+                channels.append(self.table_links.item(row, 0).text())
+        return channels
+
 
 class HelpWindow(QMainWindow):
     def __init__(self):
@@ -310,6 +320,7 @@ class HelpWindow(QMainWindow):
 
         self.label = QtWidgets.QLabel(self)
         self.label.setText("Hello")
+
 
 def application():
     app = QApplication(sys.argv)
