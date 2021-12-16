@@ -1,21 +1,17 @@
 from tg_parser import client
 from tg_parser import dump_all_messages
-from app_ui import MainWindow
+import app_ui
 from morph import search
 from PyQt5.QtWidgets import QApplication
 import sys
 
-window = MainWindow()
-
 
 def main():
-    app = QApplication(sys.argv)
-    window.show()
-    sys.exit(app.exec_())
+    app_ui.application()
 
 
 async def parse(data):
-    for link in data["channels"]:
+    for link in data["links"]:
         channel = await client.get_entity(link)
         await dump_all_messages(channel)
         results = await search(data["request"], data["date_from"], data["date_to"])
@@ -27,8 +23,10 @@ async def parse(data):
 
 
 def start(data):
+    print("вхожу в старт")
     with client:
         client.loop.run_until_complete(parse(data))
+
 
 if __name__ == "__main__":
     main()
