@@ -1,5 +1,6 @@
 import pymorphy2
 import re
+from traceback import print_stack, print_exc
 import datetime
 
 from tg_parser import dump_all_messages, client
@@ -15,10 +16,10 @@ morph = pymorphy2.MorphAnalyzer()
 # если просклонять не удалось, morph вернет None
 # если вернулось не None, то вернем получившееся слово, иначе -- исходное
 def normalize_word(word):
-    normalizedWord = morph.parse(word)[0].inflect({"sing", "nomn"})
+    normalizedWord = morph.parse(word)[0].normal_form
 
     if normalizedWord:
-        return normalizedWord.word
+        return normalizedWord
     return word
 
 
@@ -31,11 +32,12 @@ def normalize_word(word):
 # возвращаем frozenset, т.к. одинаковые слова нам не нужны
 
 def normalize_message(message):
+    message = re.sub(r'[^A-Za-zА-яёЁ0-9]', ' ', message)
     message = message.split(' ')
     for i, w in enumerate(message):
-        w = re.sub(r'[^A-Za-zА-яёЁ0-9]', '', w).lower()
         message[i] = normalize_word(w)
-    return frozenset(message)
+    message = set(message)
+    return message
 
 
 ''' функция приведения к нормальному виду пользовательского запроса'''
@@ -84,7 +86,6 @@ def normalize_request(req):
 # выполняем request как строчку кода, после чего получаем в res True или False,
 # в зависимости от того, успешен ли запрос
 def is_suitable(request, message):
-    message = normalize_message(message)
     is_in = lambda word, message: str(word) in message
     global res
     res = None
@@ -95,29 +96,34 @@ def is_suitable(request, message):
     {"channel" : posts}, где posts -- массив всех подходящих постов,
     каждый из которых представлен в виде словаря {"message": msg, "date": time_stamp} '''
 
-def search(request, channels):
+async def search(request, channels, date_from, date_to):
     logs_suc = open("logs_suc.txt", 'w')
     logs_err = open("logs_err.txt", 'w')
     request = normalize_request(request)
-    result = []
+
+    results = {}
     for channel in channels:
         try:
             channel_obj = await client.get_entity(channel)
             await dump_all_messages(channel_obj)
             suitable_messages = []
-            posts = parse("channel_messages.json")
+            posts = parse("channel_messages.json", date_from, date_to)
 
             for post in posts:
-                msg = post["msg"]
+                msg = normalize_message(post["message"])
                 if is_suitable(request, msg):
                     suitable_messages.append(post)
+
             if suitable_messages:
-                result.append({"channel" : suitable_messages})
-                logs_suc.write("На канале {} найдено {} сообщений, удовлетворяющих запросу \n".format(channel, len(suitable_messages)))
+                results[channel.title] = suitable_messages
+                logs_suc.write("На канале {} найдено {} постов(-а), удовлетворяющих запросу \n".format(channel.title, len(suitable_messages)))
             else:
-                logs_suc.write("На канале {} не найдено сообщений, удовлетворяющих запросу \n".format(channel))
+                logs_suc.write("На канале {} не найдено сообщений, удовлетворяющих запросу \n".format(channel.title))
         except:
-            logs_err.write("Канал {} не найден. Запрос от {} \n".format(channel, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+            print_stack()
+            print_exc()
+            logs_err.write("Канал {} не найден. Запрос от {} \n".format(channel.title, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     logs_suc.close()
     logs_err.close()
-    return result
+
+    return results
