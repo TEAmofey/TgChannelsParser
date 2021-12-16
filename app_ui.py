@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut
-from main import parse
+from main import start
 
 import sys
 
@@ -327,7 +327,7 @@ class MainWindow(QMainWindow):
             "date_from": date_to_string(self.date_field_from.date()),
             "date_to": date_to_string(self.date_field_to.date())
         }
-        parse(data)
+        start(data)
 
     def collect_links(self):
         channels = []
@@ -343,5 +343,11 @@ class HelpWindow(QMainWindow):
 
         self.label = QtWidgets.QLabel(self)
         self.label.setText("Hello")
+
+def application():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
 
 # https://my.telegram.org/auth
