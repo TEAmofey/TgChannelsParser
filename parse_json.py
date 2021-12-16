@@ -13,10 +13,9 @@ def parse(filename, date_from, date_to):
         if time_stamp > date_to:
             break
 
-        try:  # Сообщения о смене названия канала тоже считаются объектом, но не имеют поля "message"
+        # Сообщения о смене названия канала тоже считаются объектом, но не имеют поля "message"
+        if "message" in obj.keys():
             msg = obj["message"]
             filtered_data.append({"message": msg, "date": time_stamp})
-        except:
-            continue
 
     return filtered_data
