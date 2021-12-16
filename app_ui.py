@@ -1,8 +1,20 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut
+from main import parse
 
 import sys
+
+
+def date_to_string(date):
+    year = str(date.year())
+    month = str(date.month())
+    day = str(date.day())
+    return "{}-{}-{}".format(
+        '0' * (4 - len(year)) + year,
+        '0' * (2 - len(month)) + month,
+        '0' * (2 - len(day)) + day
+    )
 
 
 def create_check_box(condition):
@@ -15,7 +27,7 @@ def create_check_box(condition):
         QCheckBox::indicator {
             width: 23px;
             height: 23px;
-
+            
             border: 2px solid black;
             border-radius: 4px;
         }
@@ -118,6 +130,11 @@ class MainWindow(QMainWindow):
         # self.shortcut_enter = QShortcut(QtCore.Qt.Key_Return, self)
         # self.shortcut_enter.activated.connect(self.add_channel)
 
+        # ----- Windows -----
+
+        # Help Window
+        self.help_window = HelpWindow()
+
         # ----- Menu -----
         self.menu_bar = QtWidgets.QMenuBar(self)
         self.menu_file = QtWidgets.QMenu(self.menu_bar)
@@ -196,7 +213,7 @@ class MainWindow(QMainWindow):
         self.button_start.setGeometry(QtCore.QRect(850, 400, 175, 50))
         self.button_start.setText("Начать поиск")
         self.button_start.setFont(self.main_font_big)
-        self.button_start.clicked.connect(self.collect_channels)
+        self.button_start.clicked.connect(self.send_request)
 
     def create_button_help(self):
         self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
@@ -296,17 +313,23 @@ class MainWindow(QMainWindow):
         self.table_links.setRowCount(max(self.begin_row_quantity, self.row_counter))
 
     def show_help(self):
-        label = QtWidgets.QLabel()
-        label.setText("Hello")
-        label.setGeometry(QtCore.QRect(100, 100, 100, 100))
-        label.show()
+        self.help_window.show()
 
     def close_app(self):
         self.close()
 
     # Backend connection
 
-    def collect_channels(self):
+    def send_request(self):
+        data = {
+            "links": self.collect_links(),
+            "request": self.insert_key_word.toPlainText(),
+            "date_from": date_to_string(self.date_field_from.date()),
+            "date_to": date_to_string(self.date_field_to.date())
+        }
+        parse(data)
+
+    def collect_links(self):
         channels = []
         for row in range(self.row_counter):
             if self.table_links.cellWidget(row, 1).layout().itemAt(0).widget().isChecked():
@@ -321,13 +344,4 @@ class HelpWindow(QMainWindow):
         self.label = QtWidgets.QLabel(self)
         self.label.setText("Hello")
 
-
-def application():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    application()
+# https://my.telegram.org/auth

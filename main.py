@@ -1,21 +1,34 @@
 from tg_parser import client
 from tg_parser import dump_all_messages
-from app_ui import application
+from app_ui import MainWindow
 from morph import search
+from PyQt5.QtWidgets import QApplication
+import sys
+
+window = MainWindow()
 
 
-async def main():
-    url = input("Введите ссылку на канал или чат: ")
-    channel = await client.get_entity(url)
-    req = input("Введите запрос: ")
-    # await dump_all_messages(channel)
-    results = await search(req, [channel])
-    if results:
-        print(results)
-    #     for x in results[1]:
-    #         print(x)
-    else:
-        print("Nothing")
-with client:
-    client.loop.run_until_complete(main())
+def main():
+    app = QApplication(sys.argv)
+    window.show()
+    sys.exit(app.exec_())
 
+
+async def parse(data):
+    for link in data["channels"]:
+        channel = await client.get_entity(link)
+        await dump_all_messages(channel)
+        results = await search(data["request"], data["date_from"], data["date_to"])
+        print("Results for {}".format(link))
+        if results:
+            print(results)
+        else:
+            print("Nothing")
+
+
+def start(data):
+    with client:
+        client.loop.run_until_complete(parse(data))
+
+if __name__ == "__main__":
+    main()
