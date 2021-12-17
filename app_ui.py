@@ -6,6 +6,13 @@ from main import start
 import sys
 
 
+windows = []
+
+
+def show_help():
+    windows[0].show_help()
+
+
 def date_to_string(date):
     year = str(date.year())
     month = str(date.month())
@@ -327,7 +334,7 @@ class MainWindow(QMainWindow):
             "date_from": date_to_string(self.date_field_from.date()),
             "date_to": date_to_string(self.date_field_to.date())
         }
-        start(data)
+        start(data, self)
 
     def collect_links(self):
         channels = []
@@ -343,6 +350,7 @@ class HelpWindow(QMainWindow):
 
         self.label = QtWidgets.QLabel(self)
         self.label.setText("Hello")
+
 
 def application():
     app = QApplication(sys.argv)
