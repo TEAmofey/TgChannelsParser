@@ -1,16 +1,9 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut
+from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon
 from main import start
 
 import sys
-
-
-windows = []
-
-
-def show_help():
-    windows[0].show_help()
 
 
 def date_to_string(date):
@@ -28,23 +21,21 @@ def create_check_box(condition):
     widget_check_box = QtWidgets.QWidget()
     check_box = QtWidgets.QCheckBox()
     check_box.setChecked(condition)
-    check_box.setFixedWidth(27)
+    check_box.setFixedWidth(25)
     check_box.setFixedHeight(27)
     check_box.setStyleSheet('''
         QCheckBox::indicator {
-            width: 23px;
-            height: 23px;
-            
-            border: 2px solid black;
-            border-radius: 4px;
+            width: 25px;
+            height: 25px;
+            background-image : url(images/unchecked.svg);
         }
 
         QCheckBox::indicator:hover {
-            border: 2px solid gray;
+            background-image : url(images/hover_v2.svg);
         }
 
         QCheckBox::indicator:checked {  
-            background-color: #66ff66;
+            background-image : url(images/checked.svg);
         }
         ''')
     layout = QtWidgets.QHBoxLayout(widget_check_box)
@@ -64,7 +55,7 @@ class MainWindow(QMainWindow):
         MainWindow.setFixedHeight(self, 720)
 
         # Если захотим сделать лого
-        # self.setWindowIcon(QtGui.QIcon("icon.png"))
+        self.setWindowIcon(QtGui.QIcon("images/icon.png"))
 
         self.begin_row_quantity = 15
         self.row_counter = 0

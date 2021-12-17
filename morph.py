@@ -92,8 +92,8 @@ def is_suitable(request, message):
     res = None
     try:
         exec(request)
-    except:
-        raise RequestException()
+    except SyntaxError:
+        raise RequestException(request)
     return res
 
 
@@ -110,10 +110,11 @@ async def search(request, date_from, date_to):
         posts = parse("channel_messages.json", date_from, date_to)
 
         for post in posts:
-            msg = normalize_message(post["message"])
-            if is_suitable(request, msg):
-                suitable_messages.append(post)
+            if "message" in post.keys():
+                msg = normalize_message(post["message"])
+                if is_suitable(request, msg):
+                    suitable_messages.append(post)
 
         return suitable_messages
-    except:
-        raise SearchException
+    except RequestException as error:
+        raise RequestException(error.request)
