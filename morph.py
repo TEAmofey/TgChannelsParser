@@ -1,10 +1,11 @@
+import traceback
+
 import pymorphy2
 import re
 from exceptions import SearchException, RequestException
 from traceback import print_stack, print_exc
 import datetime
 
-from tg_parser import dump_all_messages, client
 from parse_json import parse
 
 # Создаем объект класса-анализатора
@@ -118,3 +119,5 @@ async def search(request, date_from, date_to):
         return suitable_messages
     except RequestException as error:
         raise RequestException(error.request)
+    except:
+        print(traceback.format_exc())

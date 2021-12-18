@@ -1,9 +1,16 @@
-from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon
-from main import start
+import os
+import traceback
 
+from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtCore import QObject
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction
+
+import main
 import sys
+
+import tg_parser
+from threads_ui import TelethonHandler
 
 
 def date_to_string(date):
@@ -23,27 +30,33 @@ def create_check_box(condition):
     check_box.setChecked(condition)
     check_box.setFixedWidth(25)
     check_box.setFixedHeight(27)
-    check_box.setStyleSheet('''
-        QCheckBox::indicator {
-            width: 25px;
-            height: 25px;
-            background-image : url(images/unchecked.svg);
-        }
-
-        QCheckBox::indicator:hover {
-            background-image : url(images/hover_v2.svg);
-        }
-
-        QCheckBox::indicator:checked {  
-            background-image : url(images/checked.svg);
-        }
-        ''')
+    with open("styles/check_box.styl", "r") as style:
+        check_box.setStyleSheet(style.read())
     layout = QtWidgets.QHBoxLayout(widget_check_box)
     layout.addWidget(check_box)
 
     layout.setAlignment(QtCore.Qt.AlignCenter)
     layout.setContentsMargins(0, 0, 0, 0)
     return widget_check_box
+
+
+class ParseHandler(QObject):
+    # def __init__(self, data, window):
+    #     super(ParseHandler, self).__init__()
+    #     self.data = data
+    #     self.window = window
+
+    data = None
+    window = None
+
+    def insert(self, data, window):
+        self.data = data
+        self.window = window
+
+    def run(self):
+        print("Launching parse from UI")
+        print("Links: {}".format(self.data["links"]))
+        main.start(self.data, self.window)
 
 
 class MainWindow(QMainWindow):
@@ -91,7 +104,7 @@ class MainWindow(QMainWindow):
 
         # ----- Right side -----
 
-        # Insert field (insert key words)
+        # Insert field (insert keywords)
         self.insert_key_word = QtWidgets.QPlainTextEdit(self)
         self.create_insert_key_word_field()
 
@@ -154,12 +167,22 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
         QtCore.QMetaObject.connectSlotsByName(self)
 
+        self.parse_thread = QtCore.QThread()
+        self.parse_handler = ParseHandler()
+        self.parse_handler.moveToThread(self.parse_thread)
+        self.parse_thread.started.connect(self.parse_handler.run)
+
+        self.first_connect_thread = QtCore.QThread()
+        self.connect_handler = TelethonHandler()
+        self.connect_handler.moveToThread(self.first_connect_thread)
+        self.first_connect_thread.started.connect(self.connect_handler.run)
+        self.first_connect_thread.start()
+
     # Initializing methods
 
     def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(self, _translate("MainWindow", "Telegram search"))
-        self.button_add_link.setText(_translate("MainWindow", "Добавить"))
         self.menu_file.setTitle(_translate("MainWindow", "Меню"))
         self.action_edit.setText(_translate("MainWindow", "Настройки"))
         self.action_exit.setText(_translate("MainWindow", "Выход"))
@@ -185,39 +208,45 @@ class MainWindow(QMainWindow):
     # Buttons
 
     def create_button_add_link(self):
-        self.button_add_link.setGeometry(QtCore.QRect(538, 75, 80, 35))
-        self.button_add_link.setObjectName("pushButton")
+        self.button_add_link.setGeometry(QtCore.QRect(538, 75, 0, 0))
+        with open("styles/button_add.styl", "r") as style:
+            self.button_add_link.setStyleSheet(style.read())
+        self.button_add_link.adjustSize()
         self.button_add_link.clicked.connect(self.add_channel)
 
     def create_button_choose_everything(self):
-        self.button_choose_everything.setGeometry(QtCore.QRect(50, 660, 100, 30))
-        self.button_choose_everything.setText("Выбрать все")
-        self.button_choose_everything.setFont(self.main_font_small)
+        self.button_choose_everything.setGeometry(QtCore.QRect(50, 660, 0, 0))
+        with open("styles/button_choose.styl", "r") as style:
+            self.button_choose_everything.setStyleSheet(style.read())
+        self.button_choose_everything.adjustSize()
         self.button_choose_everything.clicked.connect(self.choose_everything)
 
     def create_button_remove_everything(self):
-        self.button_remove_everything.setGeometry(QtCore.QRect(160, 660, 100, 30))
-        self.button_remove_everything.setText("Убрать все")
-        self.button_remove_everything.setFont(self.main_font_small)
+        self.button_remove_everything.setGeometry(QtCore.QRect(160, 660, 0, 0))
+        with open("styles/button_remove.styl", "r") as style:
+            self.button_remove_everything.setStyleSheet(style.read())
+        self.button_remove_everything.adjustSize()
         self.button_remove_everything.clicked.connect(self.remove_everything)
 
     def create_button_delete_chosen(self):
-        self.button_delete_chosen.setGeometry(QtCore.QRect(510, 660, 140, 30))
-        self.button_delete_chosen.setText("Удалить выбранное")
-        self.button_delete_chosen.setFont(self.main_font_small)
+        self.button_delete_chosen.setGeometry(QtCore.QRect(510, 660, 0, 0))
+        with open("styles/button_delete.styl", "r") as style:
+            self.button_delete_chosen.setStyleSheet(style.read())
+        self.button_delete_chosen.adjustSize()
         self.button_delete_chosen.clicked.connect(self.delete_chosen)
 
     def create_button_start(self):
-        self.button_start.setGeometry(QtCore.QRect(850, 400, 175, 50))
-        self.button_start.setText("Начать поиск")
-        self.button_start.setFont(self.main_font_big)
+        self.button_start.setGeometry(QtCore.QRect(850, 400, 0, 0))
+        with open("styles/button_start.styl", "r") as style:
+            self.button_start.setStyleSheet(style.read())
+        self.button_start.adjustSize()
         self.button_start.clicked.connect(self.send_request)
 
     def create_button_help(self):
-        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 30, 35))
-        self.button_show_help.setObjectName("pushButton")
-        self.button_show_help.setText("?")
-        self.button_show_help.setFont(self.main_font_big)
+        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 0, 0))
+        with open("styles/button_help.styl", "r") as style:
+            self.button_show_help.setStyleSheet(style.read())
+        self.button_show_help.adjustSize()
         self.button_show_help.clicked.connect(self.show_help)
 
     # Insert fields
@@ -290,7 +319,6 @@ class MainWindow(QMainWindow):
         self.insert_link.clear()
 
     def choose_everything(self):
-
         self.set_checkboxes(True)
 
     def remove_everything(self):
@@ -314,6 +342,7 @@ class MainWindow(QMainWindow):
         self.help_window.show()
 
     def close_app(self):
+        self.help_window.close()
         self.close()
 
     # Backend connection
@@ -325,7 +354,9 @@ class MainWindow(QMainWindow):
             "date_from": date_to_string(self.date_field_from.date()),
             "date_to": date_to_string(self.date_field_to.date())
         }
-        start(data, self)
+
+        self.parse_handler.insert(data, self)
+        self.parse_thread.start()
 
     def collect_links(self):
         channels = []
@@ -339,14 +370,24 @@ class HelpWindow(QMainWindow):
     def __init__(self):
         super(HelpWindow, self).__init__()
 
+        HelpWindow.setWindowTitle(self, "Построение запроса")
+        HelpWindow.setFixedWidth(self, 640)
+        HelpWindow.setFixedHeight(self, 360)
+        HelpWindow.setWindowIcon(self, QtGui.QIcon("images/question.png"))
+
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.label = QtWidgets.QLabel(self)
-        self.label.setText("Hello")
+        self.label.setText("Prosto text")
+        self.label.setFont(QtGui.QFont("Calibri", 12, QtGui.QFont.Medium))
+        self.label.setContentsMargins(20, 20, 0, 0)
+        self.label.adjustSize()
+        self.layout.addWidget(self.label)
 
 
-def application():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+# def application():
+#     app = QApplication(sys.argv)
+#     window = MainWindow()
+#     window.show()
+#     sys.exit(app.exec_())
 
 # https://my.telegram.org/auth

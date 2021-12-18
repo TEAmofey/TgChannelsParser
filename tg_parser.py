@@ -1,6 +1,10 @@
+import asyncio
 import configparser
 import json
+import os
+import traceback
 
+from telethon.client import TelegramBaseClient
 from telethon.sync import TelegramClient
 from telethon import connection
 
@@ -23,12 +27,12 @@ api_id = config['Telegram']['api_id']
 api_hash = config['Telegram']['api_hash']
 username = config['Telegram']['username']
 
-client = TelegramClient(username, int(api_id), api_hash)
-
-client.start()
+dictionary = {"client": None}
 
 
 async def dump_all_messages(channel):
+    client: TelegramClient = dictionary["client"]
+
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
     offset_msg = 0  # номер записи, с которой начинается считывание
     limit_msg = 100  # максимальное число записей, передаваемых за один раз
