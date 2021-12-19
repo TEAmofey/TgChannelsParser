@@ -18,17 +18,25 @@ from telethon.tl.types import ChannelParticipantsSearch
 # класс для работы с сообщениями
 from telethon.tl.functions.messages import GetHistoryRequest
 
-# Считываем учетные данные
-config = configparser.ConfigParser()
-config.read("config.ini")
+# # Считываем учетные данные
+# config = configparser.ConfigParser()
+# config.read("config.ini")
+#
+# # Присваиваем значения внутренним переменным
+# api_id = config['Telegram']['api_id']
+# api_hash = config['Telegram']['api_hash']
+# username = config['Telegram']['username']
 
-# Присваиваем значения внутренним переменным
-api_id = config['Telegram']['api_id']
-api_hash = config['Telegram']['api_hash']
-username = config['Telegram']['username']
+dictionary = {
+    "client": None,
+    "api_id": None,
+    "api_hash": None,
+    "username": None,
+    "phone": None,
 
-dictionary = {"client": None}
-
+    # Тип str обязателен
+    "code": "None"
+}
 
 async def dump_all_messages(channel):
     client: TelegramClient = dictionary["client"]

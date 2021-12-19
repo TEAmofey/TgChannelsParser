@@ -1,3 +1,4 @@
+import configparser
 import os
 import traceback
 
@@ -6,11 +7,11 @@ from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction
 
+import app_ui_classes
 import main
 import sys
 
-import tg_parser
-from threads_ui import TelethonHandler
+from tg_parser import dictionary
 
 
 def date_to_string(date):
@@ -38,25 +39,6 @@ def create_check_box(condition):
     layout.setAlignment(QtCore.Qt.AlignCenter)
     layout.setContentsMargins(0, 0, 0, 0)
     return widget_check_box
-
-
-class ParseHandler(QObject):
-    # def __init__(self, data, window):
-    #     super(ParseHandler, self).__init__()
-    #     self.data = data
-    #     self.window = window
-
-    data = None
-    window = None
-
-    def insert(self, data, window):
-        self.data = data
-        self.window = window
-
-    def run(self):
-        print("Launching parse from UI")
-        print("Links: {}".format(self.data["links"]))
-        main.start(self.data, self.window)
 
 
 class MainWindow(QMainWindow):
@@ -141,11 +123,6 @@ class MainWindow(QMainWindow):
         # self.shortcut_enter = QShortcut(QtCore.Qt.Key_Return, self)
         # self.shortcut_enter.activated.connect(self.add_channel)
 
-        # ----- Windows -----
-
-        # Help Window
-        self.help_window = HelpWindow()
-
         # ----- Menu -----
         self.menu_bar = QtWidgets.QMenuBar(self)
         self.menu_file = QtWidgets.QMenu(self.menu_bar)
@@ -167,16 +144,28 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
         QtCore.QMetaObject.connectSlotsByName(self)
 
+        '''Extra classes initializing'''
+
+        # ----- Windows -----
+
+        # Help Window
+        self.help_window = app_ui_classes.HelpWindow()
+
+        # Phone Window
+        self.phone_window = app_ui_classes.PhoneWindow(self)
+
         self.parse_thread = QtCore.QThread()
-        self.parse_handler = ParseHandler()
+        self.parse_handler = app_ui_classes.ParseHandler()
         self.parse_handler.moveToThread(self.parse_thread)
         self.parse_thread.started.connect(self.parse_handler.run)
 
         self.first_connect_thread = QtCore.QThread()
-        self.connect_handler = TelethonHandler()
+        self.connect_handler = app_ui_classes.TelethonHandler(self, self.phone_window)
         self.connect_handler.moveToThread(self.first_connect_thread)
         self.first_connect_thread.started.connect(self.connect_handler.run)
-        self.first_connect_thread.start()
+        # self.first_connect_thread.start()
+
+        self.check_phone()
 
     # Initializing methods
 
@@ -345,9 +334,29 @@ class MainWindow(QMainWindow):
         self.help_window.close()
         self.close()
 
+    # Config stuff
+    def check_phone(self):
+        if not os.path.exists('config.ini'):
+            self.ask_info()
+        else:
+            # Считываем учетные данные
+            config = configparser.ConfigParser()
+            config.read("config.ini")
+
+            # Присваиваем значения внутренним переменным
+            dictionary["phone"] = config['Telegram']['phone']
+            dictionary["api_id"] = config['Telegram']['api_id']
+            dictionary["api_hash"] = config['Telegram']['api_hash']
+            dictionary["username"] = config['Telegram']['username']
+            print("Config parsed successfully.")
+
+    def ask_info(self):
+        self.phone_window.show()
+
     # Backend connection
 
     def send_request(self):
+        self.check_phone()
         data = {
             "links": self.collect_links(),
             "request": self.insert_key_word.toPlainText(),
@@ -365,23 +374,9 @@ class MainWindow(QMainWindow):
                 channels.append(self.table_links.item(row, 0).text())
         return channels
 
-
-class HelpWindow(QMainWindow):
-    def __init__(self):
-        super(HelpWindow, self).__init__()
-
-        HelpWindow.setWindowTitle(self, "Построение запроса")
-        HelpWindow.setFixedWidth(self, 640)
-        HelpWindow.setFixedHeight(self, 360)
-        HelpWindow.setWindowIcon(self, QtGui.QIcon("images/question.png"))
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.label = QtWidgets.QLabel(self)
-        self.label.setText("Prosto text")
-        self.label.setFont(QtGui.QFont("Calibri", 12, QtGui.QFont.Medium))
-        self.label.setContentsMargins(20, 20, 0, 0)
-        self.label.adjustSize()
-        self.layout.addWidget(self.label)
+    def authorize(self):
+        print("Authorizing...")
+        self.first_connect_thread.start()
 
 
 # def application():
