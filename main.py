@@ -5,7 +5,7 @@ import PyQt5.QtWidgets
 from telethon import TelegramClient
 
 
-from tg_parser import username, api_id, api_hash, dictionary, dump_all_messages
+from tg_parser import dictionary, dump_all_messages
 import app_ui
 from exceptions import RequestException, SearchException
 from morph import search
@@ -23,7 +23,10 @@ def main():
 async def parse(data, window):
     try:
         print("Connecting client...")
-        dictionary["client"] = TelegramClient(username, int(api_id), api_hash)
+        dictionary["client"] = TelegramClient(
+            dictionary["username"],
+            int(dictionary["api_id"]),
+            dictionary["api_hash"])
         await dictionary["client"].start()
     except:
         print(traceback.format_exc())
