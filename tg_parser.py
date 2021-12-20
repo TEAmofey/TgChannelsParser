@@ -27,7 +27,7 @@ from telethon.tl.functions.messages import GetHistoryRequest
 # api_hash = config['Telegram']['api_hash']
 # username = config['Telegram']['username']
 
-dictionary = {
+telethon_data = {
     "client": None,
     "api_id": None,
     "api_hash": None,
@@ -35,11 +35,12 @@ dictionary = {
     "phone": None,
 
     # Тип str обязателен
-    "code": "None"
+    "code": None
 }
 
+
 async def dump_all_messages(channel):
-    client: TelegramClient = dictionary["client"]
+    client: TelegramClient = telethon_data["client"]
 
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
     offset_msg = 0  # номер записи, с которой начинается считывание

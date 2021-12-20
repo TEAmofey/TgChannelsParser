@@ -1,11 +1,10 @@
 import asyncio
 import traceback
 
-import PyQt5.QtWidgets
 from telethon import TelegramClient
 
 
-from tg_parser import dictionary, dump_all_messages
+from tg_parser import telethon_data, dump_all_messages
 import app_ui
 from exceptions import RequestException, SearchException
 from morph import search
@@ -23,11 +22,11 @@ def main():
 async def parse(data, window):
     try:
         print("Connecting client...")
-        dictionary["client"] = TelegramClient(
-            dictionary["username"],
-            int(dictionary["api_id"]),
-            dictionary["api_hash"])
-        await dictionary["client"].start()
+        telethon_data["client"] = TelegramClient(
+            telethon_data["username"],
+            int(telethon_data["api_id"]),
+            telethon_data["api_hash"])
+        await telethon_data["client"].start()
     except:
         print(traceback.format_exc())
 
@@ -36,7 +35,7 @@ async def parse(data, window):
     for link in data["links"]:
         try:
             print("\tLink: {}".format(link))
-            channel = await dictionary["client"].get_entity(link)
+            channel = await telethon_data["client"].get_entity(link)
             print("\t\tChannel found.")
             await dump_all_messages(channel)
             print("\t\tPosts downloaded.")
@@ -55,8 +54,8 @@ async def parse(data, window):
         except:
             print(traceback.format_exc())
 
-    if dictionary["client"] is not None and dictionary["client"].is_connected():
-        await dictionary["client"].disconnect()
+    if telethon_data["client"] is not None and telethon_data["client"].is_connected():
+        await telethon_data["client"].disconnect()
         print("Client disconnected.")
 
     print("Completed task.")

@@ -5,13 +5,14 @@ import traceback
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction
+from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction, QLayout
+from telethon import TelegramClient
 
 import app_ui_classes
 import main
 import sys
 
-from tg_parser import dictionary
+from tg_parser import telethon_data
 
 
 def date_to_string(date):
@@ -81,13 +82,13 @@ class MainWindow(QMainWindow):
         self.create_button_add_link()
 
         # Insert field (insert telegram link)
-        self.insert_link = QtWidgets.QPlainTextEdit(self)
+        self.insert_link = QtWidgets.QLineEdit(self)
         self.create_insert_link_field()
 
         # ----- Right side -----
 
         # Insert field (insert keywords)
-        self.insert_key_word = QtWidgets.QPlainTextEdit(self)
+        self.insert_key_word = QtWidgets.QLineEdit(self)
         self.create_insert_key_word_field()
 
         # Button (Show help)
@@ -113,6 +114,68 @@ class MainWindow(QMainWindow):
         self.button_start = QtWidgets.QPushButton(self)
         self.create_button_start()
 
+        # ----- Layouts -----
+
+        self.main_widget = QtWidgets.QWidget(self)
+        self.setCentralWidget(self.main_widget)
+
+        self.main_hlayout = QtWidgets.QHBoxLayout(self.main_widget)
+        self.right_vlayout = QtWidgets.QVBoxLayout()
+        self.left_vlayout = QtWidgets.QVBoxLayout()
+        self.link_hlayout = QtWidgets.QHBoxLayout()
+        self.buttons_hlayout = QtWidgets.QHBoxLayout()
+        self.key_hlayout = QtWidgets.QHBoxLayout()
+        self.dates_from = QtWidgets.QHBoxLayout()
+        self.dates_to = QtWidgets.QHBoxLayout()
+        self.text_layout = QtWidgets.QHBoxLayout()
+        self.button_start_layout = QtWidgets.QHBoxLayout()
+
+        self.link_hlayout.addSpacing(22)
+        self.link_hlayout.addWidget(self.insert_link)
+        self.link_hlayout.addWidget(self.button_add_link)
+        self.link_hlayout.addSpacing(22)
+
+        self.buttons_hlayout.addWidget(self.button_choose_everything)
+        self.buttons_hlayout.addWidget(self.button_remove_everything)
+        self.buttons_hlayout.addSpacing(200)
+        self.buttons_hlayout.addWidget(self.button_delete_chosen)
+
+        self.left_vlayout.addSpacing(20)
+        self.left_vlayout.addLayout(self.link_hlayout)
+        self.left_vlayout.addWidget(self.table_links)
+        self.left_vlayout.addLayout(self.buttons_hlayout)
+        self.left_vlayout.addSpacing(20)
+
+        self.key_hlayout.addSpacing(50)
+        self.key_hlayout.addWidget(self.insert_key_word)
+        self.key_hlayout.addWidget(self.button_show_help)
+        self.key_hlayout.addSpacing(50)
+
+        self.dates_from.addSpacing(200)
+        self.dates_from.addWidget(self.text_date_from)
+        self.dates_from.addWidget(self.date_field_from)
+        self.dates_from.addSpacing(200)
+        self.dates_to.addSpacing(200)
+        self.dates_to.addWidget(self.text_date_to)
+        self.dates_to.addWidget(self.date_field_to)
+        self.dates_to.addSpacing(200)
+
+        self.text_layout.addWidget(self.text_date_interval)
+        self.button_start_layout.addWidget(self.button_start)
+
+        self.right_vlayout.addSpacing(100)
+        self.right_vlayout.addLayout(self.key_hlayout)
+        self.right_vlayout.addSpacing(25)
+        self.right_vlayout.addLayout(self.text_layout)
+        self.right_vlayout.addLayout(self.dates_from)
+        self.right_vlayout.addLayout(self.dates_to)
+        self.right_vlayout.addSpacing(30)
+        self.right_vlayout.addLayout(self.button_start_layout)
+        self.right_vlayout.addSpacing(200)
+
+        self.main_hlayout.addLayout(self.left_vlayout)
+        self.main_hlayout.addLayout(self.right_vlayout)
+
         # ----- Shortcuts -----
 
         # Exit
@@ -136,6 +199,7 @@ class MainWindow(QMainWindow):
         MainWindow.setStatusBar(self, self.status_bar)
         self.action_edit = QtWidgets.QAction()
         self.action_edit.setObjectName("actionEdit")
+        self.action_edit.triggered.connect(self.ask_info)
         self.action_exit = QtWidgets.QAction()
         self.action_exit.setObjectName("actionExit")
         self.action_exit.triggered.connect(self.close_app)
@@ -173,7 +237,7 @@ class MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(self, _translate("MainWindow", "Telegram search"))
         self.menu_file.setTitle(_translate("MainWindow", "Меню"))
-        self.action_edit.setText(_translate("MainWindow", "Настройки"))
+        self.action_edit.setText(_translate("MainWindow", "Конфигурация"))
         self.action_exit.setText(_translate("MainWindow", "Выход"))
 
     # Text fields
@@ -181,8 +245,7 @@ class MainWindow(QMainWindow):
     def create_date_descriptions(self):
         self.text_date_interval.setText("Выберите диапазон поиска:")
         self.text_date_interval.setFont(self.main_font_big)
-        self.text_date_interval.setGeometry(QtCore.QRect(820, 225, 100, 100))
-        self.text_date_interval.adjustSize()
+        self.text_date_interval.setFixedSize(248, 24)
 
         self.text_date_from.setText("От:")
         self.text_date_from.setFont(self.main_font_big)
@@ -197,74 +260,67 @@ class MainWindow(QMainWindow):
     # Buttons
 
     def create_button_add_link(self):
-        self.button_add_link.setGeometry(QtCore.QRect(538, 75, 0, 0))
+        self.button_add_link.setFixedSize(80, 35)
         with open("styles/button_add.styl", "r") as style:
             self.button_add_link.setStyleSheet(style.read())
-        self.button_add_link.adjustSize()
         self.button_add_link.clicked.connect(self.add_channel)
 
     def create_button_choose_everything(self):
-        self.button_choose_everything.setGeometry(QtCore.QRect(50, 660, 0, 0))
+        self.button_choose_everything.setFixedSize(100, 30)
         with open("styles/button_choose.styl", "r") as style:
             self.button_choose_everything.setStyleSheet(style.read())
-        self.button_choose_everything.adjustSize()
         self.button_choose_everything.clicked.connect(self.choose_everything)
 
     def create_button_remove_everything(self):
-        self.button_remove_everything.setGeometry(QtCore.QRect(160, 660, 0, 0))
+        self.button_remove_everything.setFixedSize(100, 30)
         with open("styles/button_remove.styl", "r") as style:
             self.button_remove_everything.setStyleSheet(style.read())
-        self.button_remove_everything.adjustSize()
         self.button_remove_everything.clicked.connect(self.remove_everything)
 
     def create_button_delete_chosen(self):
-        self.button_delete_chosen.setGeometry(QtCore.QRect(510, 660, 0, 0))
+        self.button_delete_chosen.setFixedSize(140, 30)
         with open("styles/button_delete.styl", "r") as style:
             self.button_delete_chosen.setStyleSheet(style.read())
-        self.button_delete_chosen.adjustSize()
         self.button_delete_chosen.clicked.connect(self.delete_chosen)
 
     def create_button_start(self):
-        self.button_start.setGeometry(QtCore.QRect(850, 400, 0, 0))
+        self.button_start.setFixedSize(175, 50)
         with open("styles/button_start.styl", "r") as style:
             self.button_start.setStyleSheet(style.read())
-        self.button_start.adjustSize()
         self.button_start.clicked.connect(self.send_request)
 
     def create_button_help(self):
-        self.button_show_help.setGeometry(QtCore.QRect(1200, 150, 0, 0))
+        self.button_show_help.setFixedSize(30, 35)
         with open("styles/button_help.styl", "r") as style:
             self.button_show_help.setStyleSheet(style.read())
-        self.button_show_help.adjustSize()
         self.button_show_help.clicked.connect(self.show_help)
 
     # Insert fields
 
     def create_insert_link_field(self):
-        self.insert_link.setGeometry(QtCore.QRect(78, 75, 450, 35))
-        self.insert_link.setObjectName("plainTextEdit")
+        self.insert_link.setFixedSize(450, 35)
+        self.insert_link.setObjectName("lineEdit")
         self.insert_link.setFont(self.main_font_medium)
-        self.insert_link.setMaximumBlockCount(1)
         self.insert_link.setPlaceholderText("Введите ссылку на telegram-канал")
+        self.insert_link.returnPressed.connect(self.add_channel)
 
     def create_insert_key_word_field(self):
-        self.insert_key_word.setGeometry(QtCore.QRect(741, 150, 450, 35))
+        self.insert_key_word.setFixedSize(450, 35)
         self.insert_key_word.setObjectName("plainTextEditKeyWord")
         self.insert_key_word.setFont(self.main_font_medium)
-        self.insert_key_word.setMaximumBlockCount(1)
         self.insert_key_word.setPlaceholderText("Введите ключевые слова")
 
     # Table
 
     def create_table_links(self):
-        self.table_links.setGeometry(QtCore.QRect(50, 150, 601, 500))
+        self.table_links.setFixedSize(600, 500)
         self.table_links.setObjectName("tableWidget")
         self.table_links.setColumnCount(2)
         self.table_links.setRowCount(self.begin_row_quantity)
         self.table_links.setFont(self.main_font_medium)
         self.table_links.setHorizontalHeaderLabels(["Ссылка", "Выбрать"])
         self.table_links.setColumnWidth(0, 450)
-        self.table_links.setColumnWidth(1, 100)
+        self.table_links.setColumnWidth(1, 99)
         self.table_links.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
         self.table_links.setSelectionMode(QtWidgets.QTableWidget.NoSelection)
 
@@ -272,12 +328,12 @@ class MainWindow(QMainWindow):
 
     def create_date_fields(self):
         # From
-        self.date_field_from.setGeometry(QtCore.QRect(900, 275, 125, 30))
+        self.date_field_from.setFixedSize(125, 30)
         self.date_field_from.setFont(self.main_font_big)
         self.date_field_from.setDateTime(QtCore.QDateTime.currentDateTime())
 
         # To
-        self.date_field_to.setGeometry(QtCore.QRect(900, 325, 125, 30))
+        self.date_field_to.setFixedSize(125, 30)
         self.date_field_to.setFont(self.main_font_big)
         self.date_field_to.setDateTime(QtCore.QDateTime.currentDateTime())
 
@@ -289,13 +345,14 @@ class MainWindow(QMainWindow):
         self.menu_file.setObjectName("menuFile")
 
     def fill_menu_bar(self):
+        self.menu_file.addAction(self.action_edit)
         self.menu_file.addAction(self.action_exit)
         self.menu_bar.addAction(self.menu_file.menuAction())
 
     #   Action methods
 
     def add_channel(self):
-        channel = self.insert_link.toPlainText()
+        channel = self.insert_link.text()
         if channel == "":
             return
         if self.row_counter >= self.begin_row_quantity:
@@ -335,20 +392,47 @@ class MainWindow(QMainWindow):
         self.close()
 
     # Config stuff
+
     def check_phone(self):
         if not os.path.exists('config.ini'):
             self.ask_info()
         else:
-            # Считываем учетные данные
-            config = configparser.ConfigParser()
-            config.read("config.ini")
+            try:
+                # Считываем учетные данные
+                config = configparser.ConfigParser()
+                config.read("config.ini")
 
-            # Присваиваем значения внутренним переменным
-            dictionary["phone"] = config['Telegram']['phone']
-            dictionary["api_id"] = config['Telegram']['api_id']
-            dictionary["api_hash"] = config['Telegram']['api_hash']
-            dictionary["username"] = config['Telegram']['username']
-            print("Config parsed successfully.")
+                # Присваиваем значения внутренним переменным
+                telethon_data["phone"] = config['Telegram']['phone']
+                telethon_data["api_id"] = config['Telegram']['api_id']
+                telethon_data["api_hash"] = config['Telegram']['api_hash']
+                telethon_data["username"] = config['Telegram']['username']
+
+                print("Config parsed successfully.")
+            except:
+                print(traceback.format_exc())
+                print("Config parsing ERROR")
+
+            authorized = False
+
+            try:
+                telethon_data["client"] = TelegramClient(
+                    telethon_data["username"],
+                    int(telethon_data["api_id"]),
+                    telethon_data["api_hash"]
+                )
+                telethon_data["client"].connect()
+                authorized = telethon_data["client"].is_user_authorized()
+                telethon_data["client"].disconnect()
+            except:
+                print(traceback.format_exc())
+
+            if not authorized:
+                print("User is not authorized.\nSending code request.")
+                # ask for code
+                pass
+            else:
+                print("Already authorized, no need to insert code.")
 
     def ask_info(self):
         self.phone_window.show()
@@ -359,7 +443,7 @@ class MainWindow(QMainWindow):
         self.check_phone()
         data = {
             "links": self.collect_links(),
-            "request": self.insert_key_word.toPlainText(),
+            "request": self.insert_key_word.text(),
             "date_from": date_to_string(self.date_field_from.date()),
             "date_to": date_to_string(self.date_field_to.date())
         }
