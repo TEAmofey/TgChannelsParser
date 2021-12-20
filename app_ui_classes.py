@@ -4,12 +4,12 @@ import traceback
 
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import QThread, QObject
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QFrame
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 
 import main
-from tg_parser import dictionary
+from tg_parser import telethon_data
 
 ''' Thread handlers section '''
 
@@ -23,17 +23,17 @@ class TelethonHandler(QObject):
 
     def run(self):
         print("Authorization")
-        print("Inserted code will be {}".format(dictionary["code"]))
+        print("Inserted code will be {}".format(telethon_data["code"]))
         try:
             async def do_it():
-                dictionary["client"] = TelegramClient(
-                    dictionary["username"],
-                    int(dictionary["api_id"]),
-                    dictionary["api_hash"]
+                telethon_data["client"] = TelegramClient(
+                    telethon_data["username"],
+                    int(telethon_data["api_id"]),
+                    telethon_data["api_hash"]
                 )
-                await dictionary["client"].start(
-                    lambda: dictionary["phone"],
-                    code_callback=lambda: dictionary["code"]
+                await telethon_data["client"].start(
+                    lambda: telethon_data["phone"],
+                    code_callback=lambda: telethon_data["code"]
                 )
 
             loop = asyncio.new_event_loop()
@@ -41,7 +41,7 @@ class TelethonHandler(QObject):
             loop = asyncio.get_event_loop()
             loop.run_until_complete(do_it())
 
-            dictionary["client"].disconnect()
+            telethon_data["client"].disconnect()
             self.main_window.correct_code = True
             print("Connected.")
         except RuntimeError:
@@ -76,18 +76,24 @@ class HelpWindow(QMainWindow):
         super(HelpWindow, self).__init__()
 
         HelpWindow.setWindowTitle(self, "Построение запроса")
-        HelpWindow.setFixedWidth(self, 640)
+        HelpWindow.setFixedWidth(self, 700)
         HelpWindow.setFixedHeight(self, 360)
         HelpWindow.setWindowIcon(self, QtGui.QIcon("images/question.png"))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.scroll = QtWidgets.QScrollArea(self)
         self.label = QtWidgets.QLabel(self)
-        self.label.setText("Prosto text")
+        self.label.setText(help_text)
         self.label.setFont(QtGui.QFont("Calibri", 12, QtGui.QFont.Medium))
         self.label.setContentsMargins(20, 20, 0, 0)
         self.label.adjustSize()
-        self.layout.addWidget(self.label)
+        self.scroll.setWidget(self.label)
+        self.scroll.setFixedSize(700, 360)
+        self.scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.layout.addWidget(self.scroll)
 
 
 class PhoneWindow(QMainWindow):
@@ -105,18 +111,18 @@ class PhoneWindow(QMainWindow):
         self.widget = QtWidgets.QWidget()
         self.setCentralWidget(self.widget)
 
-        self.insert_phone = QtWidgets.QTextEdit()
+        self.insert_phone = QtWidgets.QLineEdit()
         self.insert_phone.setPlaceholderText("Номер телефона")
-        self.insert_api_id = QtWidgets.QTextEdit()
+        self.insert_api_id = QtWidgets.QLineEdit()
         self.insert_api_id.setPlaceholderText("API ID")
-        self.insert_api_hash = QtWidgets.QTextEdit()
+        self.insert_api_hash = QtWidgets.QLineEdit()
         self.insert_api_hash.setPlaceholderText("API Hash")
-        self.insert_username = QtWidgets.QTextEdit()
+        self.insert_username = QtWidgets.QLineEdit()
         self.insert_username.setPlaceholderText("Username")
         self.button_get_code = QtWidgets.QPushButton("Получить код")
         self.button_get_code.clicked.connect(self.get_code)
 
-        self.insert_code = QtWidgets.QTextEdit()
+        self.insert_code = QtWidgets.QLineEdit()
         self.insert_code.setPlaceholderText("Введите код")
         self.insert_code.setFixedSize(150, 33)
         self.button_save = QtWidgets.QPushButton("Сохранить")
@@ -148,35 +154,68 @@ class PhoneWindow(QMainWindow):
                      "phone = {}\n"
                      "api_id = {}\n"
                      "api_hash = {}\n"
-                     "username = {}\n"
-                .format(
-                    self.insert_phone.toPlainText(),
-                    self.insert_api_id.toPlainText(),
-                    self.insert_api_hash.toPlainText(),
-                    self.insert_username.toPlainText()
-                )
+                     "username = {}\n".format(
+                self.insert_phone.text(),
+                self.insert_api_id.text(),
+                self.insert_api_hash.text(),
+                self.insert_username.text()
             )
-            dictionary["phone"] = self.insert_phone.toPlainText()
-            dictionary["api_id"] = self.insert_api_id.toPlainText()
-            dictionary["api_hash"] = self.insert_api_hash.toPlainText()
-            dictionary["username"] = self.insert_username.toPlainText()
+            )
+            telethon_data["phone"] = self.insert_phone.text()
+            telethon_data["api_id"] = self.insert_api_id.text()
+            telethon_data["api_hash"] = self.insert_api_hash.text()
+            telethon_data["username"] = self.insert_username.text()
 
         try:
-            dictionary["client"] = TelegramClient(
-                dictionary["username"],
-                int(dictionary["api_id"]),
-                dictionary["api_hash"]
+            telethon_data["client"] = TelegramClient(
+                telethon_data["username"],
+                int(telethon_data["api_id"]),
+                telethon_data["api_hash"]
             )
-            dictionary["client"].connect()
-            dictionary["client"].send_code_request(self.insert_phone.toPlainText())
-            dictionary["client"].disconnect()
+            telethon_data["client"].connect()
+            telethon_data["client"].send_code_request(self.insert_phone.text())
+            telethon_data["client"].disconnect()
         except:
             print(traceback.format_exc())
         self.insert_code.setEnabled(True)
         self.button_save.setEnabled(True)
 
     def check_code(self):
-        dictionary["code"] = self.insert_code.toPlainText()
+        telethon_data["code"] = self.insert_code.text()
         self.main_window.authorize()
         self.close()
 
+
+help_text = ("\t\tКак работает поиск по ключевым словам?\n"
+             "\n"
+             "Вы можете вводить ключевые слова в любой форме,\n"
+             "при поиске программа переводит их в начальную.\n"
+             "\n"
+             "Операция &\n"
+             "Если вы хотите, чтобы в сообщении одновременно встречалось\n"
+             "2 ключевых слова или словосочетание, то нужно написать\n"
+             "команду 'слово1 & слово2' (без кавычек).\n"
+             "Пример:\n"
+             "Если вы хотите сообщение, в котором есть синие столы,\n"
+             "введите запрос 'синие & столы'\n"
+             "\n"
+             "Операция |\n"
+             "Если вы хотите, чтобы в сообщении встречалось одно из двух ключевых\n"
+             "слов, то нужно написать команду 'слово1 | слово2'.\n"
+             "Пример:\n"
+             "Если вы хотите найти сообщения, в котором есть или синие или красные,\n"
+             "введите запрос 'синие | красные'.\n"
+             "\n"
+             "Комбинация операций\n"
+             "Чтобы выполнять более сложные запросы, нужно комбинировать первые\n"
+             "две операции с помощью скобок (по порядку выполнения действий).\n"
+             "Примеры:\n"
+             "Если вы хотите найти сообщения, в которых есть или синие столы\n"
+             "или красные столы, введите запрос '(синие | красные) & столы'.\n"
+             "Если вы хотите найти сообщения, в которых есть или синие столы\n"
+             "или что-то красное пишите запрос '(синие & столы) | красные'.\n"
+             "\n"
+             "Важно:\n"
+             "Программа не распознаёт запросы, в которых написаны словосочетания\n"
+             "без операций & или | (запрос 'синие столы' является некорректным).\n"
+             "Запрос из одного слова без операций является корректным.\n\n")
