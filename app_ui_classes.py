@@ -1,4 +1,5 @@
 import asyncio
+import re
 import time
 import traceback
 
@@ -58,14 +59,19 @@ class ParseHandler(QObject):
     data = None
     window = None
 
+    debug_append = QtCore.pyqtSignal(str)
+
     def insert(self, data, window):
         self.data = data
         self.window = window
 
+    def add_debug(self, text):
+        self.debug_append.emit(text)
+
     def run(self):
         print("Launching parse from UI")
         print("Links: {}".format(self.data["links"]))
-        main.start(self.data, self.window)
+        main.start(self.data, self.window, self)
 
 
 ''' Pop-up windows section'''
@@ -76,7 +82,7 @@ class HelpWindow(QMainWindow):
         super(HelpWindow, self).__init__()
 
         HelpWindow.setWindowTitle(self, "Построение запроса")
-        HelpWindow.setFixedWidth(self, 700)
+        HelpWindow.setFixedWidth(self, 750)
         HelpWindow.setFixedHeight(self, 360)
         HelpWindow.setWindowIcon(self, QtGui.QIcon("images/question.png"))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -89,7 +95,7 @@ class HelpWindow(QMainWindow):
         self.label.setContentsMargins(20, 20, 0, 0)
         self.label.adjustSize()
         self.scroll.setWidget(self.label)
-        self.scroll.setFixedSize(700, 360)
+        self.scroll.setFixedSize(750, 360)
         self.scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.scroll.setFrameShape(QFrame.NoFrame)
@@ -161,6 +167,12 @@ class PhoneWindow(QMainWindow):
                 self.insert_username.text()
             )
             )
+
+            self.insert_phone.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_phone.text()))
+            self.insert_api_id.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_id.text()))
+            self.insert_api_hash.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_hash.text()))
+            self.insert_username.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_username.text()))
+
             telethon_data["phone"] = self.insert_phone.text()
             telethon_data["api_id"] = self.insert_api_id.text()
             telethon_data["api_hash"] = self.insert_api_hash.text()
@@ -181,39 +193,38 @@ class PhoneWindow(QMainWindow):
         self.button_save.setEnabled(True)
 
     def check_code(self):
-        telethon_data["code"] = self.insert_code.text()
+        telethon_data["code"] = re.sub(r'[^0-9]+', '', self.insert_code.text())
         self.main_window.authorize()
         self.close()
 
 
 help_text = ("\t\tКак работает поиск по ключевым словам?\n"
              "\n"
-             "Вы можете вводить ключевые слова в любой форме,\n"
-             "при поиске программа переводит их в начальную.\n"
+             "Вы можете вводить ключевые слова в любой форме.\n"
              "\n"
-             "Операция &\n"
+             "Операция & (логическое И)\n"
              "Если вы хотите, чтобы в сообщении одновременно встречалось\n"
              "2 ключевых слова или словосочетание, то нужно написать\n"
              "команду 'слово1 & слово2' (без кавычек).\n"
              "Пример:\n"
-             "Если вы хотите сообщение, в котором есть синие столы,\n"
+             "Если вы хотите найти сообщения, в которых упоминаются синие столы,\n"
              "введите запрос 'синие & столы'\n"
              "\n"
-             "Операция |\n"
+             "Операция | (логическое ИЛИ)\n"
              "Если вы хотите, чтобы в сообщении встречалось одно из двух ключевых\n"
              "слов, то нужно написать команду 'слово1 | слово2'.\n"
              "Пример:\n"
-             "Если вы хотите найти сообщения, в котором есть или синие или красные,\n"
-             "введите запрос 'синие | красные'.\n"
+             "Если вы хотите найти сообщения, в которых упоминаются табуретки или столы,\n"
+             "введите запрос 'табуретки | столы'.\n"
              "\n"
-             "Комбинация операций\n"
+             "Комбинации операций\n"
              "Чтобы выполнять более сложные запросы, нужно комбинировать первые\n"
              "две операции с помощью скобок (по порядку выполнения действий).\n"
              "Примеры:\n"
-             "Если вы хотите найти сообщения, в которых есть или синие столы\n"
+             "Если вы хотите найти сообщения, в которых есть или синие,\n"
              "или красные столы, введите запрос '(синие | красные) & столы'.\n"
-             "Если вы хотите найти сообщения, в которых есть или синие столы\n"
-             "или что-то красное пишите запрос '(синие & столы) | красные'.\n"
+             "Если вы хотите найти сообщения, в которых есть или синие столы,\n"
+             "или табуретки, пишите запрос '(синие & столы) | табуретки'.\n"
              "\n"
              "Важно:\n"
              "Программа не распознаёт запросы, в которых написаны словосочетания\n"
