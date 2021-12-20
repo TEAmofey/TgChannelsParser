@@ -1,4 +1,5 @@
 import asyncio
+import re
 import traceback
 
 from telethon import TelegramClient
@@ -19,50 +20,54 @@ def main():
     sys.exit(app.exec_())
 
 
-async def parse(data, window):
+async def parse(data, window, handler):
     try:
-        print("Connecting client...")
+        print("Connecting...")
+        handler.add_debug("Установка соединения...")
         telethon_data["client"] = TelegramClient(
             telethon_data["username"],
             int(telethon_data["api_id"]),
             telethon_data["api_hash"])
         await telethon_data["client"].start()
     except:
-        print(traceback.format_exc())
+        handler.add_debug(traceback.format_exc())
 
-    print("Client connected.")
-    print("Links loop.")
+    print("Connected. Starting search.")
+    handler.add_debug("Соединение установлено.\nНачало поиска.")
     for link in data["links"]:
         try:
-            print("\tLink: {}".format(link))
+            handler.add_debug(4 * ' ' + "Текущий канал: {}".format(link))
+
             channel = await telethon_data["client"].get_entity(link)
-            print("\t\tChannel found.")
+
+            handler.add_debug(8 * ' ' + "Канал найден. Скачиваем все посты...")
+
             await dump_all_messages(channel)
-            print("\t\tPosts downloaded.")
-            results = await (search(data["request"], data["date_from"], data["date_to"]))
-            print("\t\tResults for {}:".format(link))
-            if results:
-                print("\t\t\t{}\n".format(results))
-            else:
-                print("\t\t\tNothing.")
+
+            handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск ключевых слов.")
+
+            dicts_of_posts = await (search(data["request"], data["date_from"], data["date_to"]))
+
+            handler.add_debug(12 * ' ' + "Найдено подходящих постов: {}.".format(len(dicts_of_posts)))
+
         except SearchException:
-            print("SearchException caught")
+            handler.add_debug("Произошла ошибка")
         except RequestException as e:
-            print("Wrong request")
+            handler.add_debug("Неправильный запрос.\nИспользуйте инструкцию (знак вопроса справа от поля ввода ключевых слов).")
         except ValueError:
-            print("\t\t\tChannel {} not found.".format(link))
+            handler.add_debug(4 * ' ' + "Канал {} не найден.".format(link))
         except:
-            print(traceback.format_exc())
+            handler.add_debug(traceback.format_exc())
 
     if telethon_data["client"] is not None and telethon_data["client"].is_connected():
         await telethon_data["client"].disconnect()
-        print("Client disconnected.")
+        # handler.add_debug("Disconnected.")
 
-    print("Completed task.")
+    handler.add_debug("Поиск завершен.")
 
 
-def start(data, window):
-    asyncio.run(parse(data, window))
+def start(data, window, handler):
+    asyncio.run(parse(data, window, handler))
 
 
 if __name__ == "__main__":

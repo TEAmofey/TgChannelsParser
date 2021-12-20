@@ -106,13 +106,17 @@ class MainWindow(QMainWindow):
         self.date_field_to = QtWidgets.QDateEdit(self)
         self.create_date_fields()
 
-        # # Calendar
-        # self.calendar = QtWidgets.QCalendarWidget(self)
-        # self.create_calendar()
-
         # Button (Start)
         self.button_start = QtWidgets.QPushButton(self)
         self.create_button_start()
+
+        # Progress scrollbar
+
+        self.debug_text = QtWidgets.QTextEdit()
+        self.debug_text.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.debug_text.setFixedSize(600, 243)
+        self.debug_text.setReadOnly(True)
+        self.debug_text.setFont(QtGui.QFont("Lucida Sans", 10))
 
         # ----- Layouts -----
 
@@ -120,6 +124,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         self.main_hlayout = QtWidgets.QHBoxLayout(self.main_widget)
+
         self.right_vlayout = QtWidgets.QVBoxLayout()
         self.left_vlayout = QtWidgets.QVBoxLayout()
         self.link_hlayout = QtWidgets.QHBoxLayout()
@@ -129,6 +134,8 @@ class MainWindow(QMainWindow):
         self.dates_to = QtWidgets.QHBoxLayout()
         self.text_layout = QtWidgets.QHBoxLayout()
         self.button_start_layout = QtWidgets.QHBoxLayout()
+
+        # self.debug_text.append("Здесь будет виден прогресс поиска.")
 
         self.link_hlayout.addSpacing(22)
         self.link_hlayout.addWidget(self.insert_link)
@@ -140,11 +147,13 @@ class MainWindow(QMainWindow):
         self.buttons_hlayout.addSpacing(200)
         self.buttons_hlayout.addWidget(self.button_delete_chosen)
 
-        self.left_vlayout.addSpacing(20)
+        self.left_vlayout.addSpacing(25)
         self.left_vlayout.addLayout(self.link_hlayout)
         self.left_vlayout.addWidget(self.table_links)
         self.left_vlayout.addLayout(self.buttons_hlayout)
         self.left_vlayout.addSpacing(20)
+
+        self.left_vlayout.setAlignment(QtCore.Qt.AlignTop)
 
         self.key_hlayout.addSpacing(50)
         self.key_hlayout.addWidget(self.insert_key_word)
@@ -163,15 +172,20 @@ class MainWindow(QMainWindow):
         self.text_layout.addWidget(self.text_date_interval)
         self.button_start_layout.addWidget(self.button_start)
 
-        self.right_vlayout.addSpacing(100)
+        self.right_vlayout.addSpacing(25)
         self.right_vlayout.addLayout(self.key_hlayout)
         self.right_vlayout.addSpacing(25)
         self.right_vlayout.addLayout(self.text_layout)
+        self.right_vlayout.addSpacing(10)
         self.right_vlayout.addLayout(self.dates_from)
         self.right_vlayout.addLayout(self.dates_to)
         self.right_vlayout.addSpacing(30)
         self.right_vlayout.addLayout(self.button_start_layout)
-        self.right_vlayout.addSpacing(200)
+        self.right_vlayout.addSpacing(30)
+        self.right_vlayout.addWidget(self.debug_text)
+        self.right_vlayout.addSpacing(22)
+
+        self.right_vlayout.setAlignment(QtCore.Qt.AlignTop)
 
         self.main_hlayout.addLayout(self.left_vlayout)
         self.main_hlayout.addLayout(self.right_vlayout)
@@ -221,6 +235,7 @@ class MainWindow(QMainWindow):
         self.parse_thread = QtCore.QThread()
         self.parse_handler = app_ui_classes.ParseHandler()
         self.parse_handler.moveToThread(self.parse_thread)
+        self.parse_handler.debug_append.connect(self.add_debug)
         self.parse_thread.started.connect(self.parse_handler.run)
 
         self.first_connect_thread = QtCore.QThread()
@@ -415,32 +430,39 @@ class MainWindow(QMainWindow):
 
             authorized = False
 
-            try:
-                telethon_data["client"] = TelegramClient(
-                    telethon_data["username"],
-                    int(telethon_data["api_id"]),
-                    telethon_data["api_hash"]
-                )
-                telethon_data["client"].connect()
-                authorized = telethon_data["client"].is_user_authorized()
-                telethon_data["client"].disconnect()
-            except:
-                print(traceback.format_exc())
-
-            if not authorized:
-                print("User is not authorized.\nSending code request.")
-                # ask for code
-                pass
-            else:
-                print("Already authorized, no need to insert code.")
+            # try:
+            #     telethon_data["client"] = TelegramClient(
+            #         telethon_data["username"],
+            #         int(telethon_data["api_id"]),
+            #         telethon_data["api_hash"]
+            #     )
+            #     telethon_data["client"].connect()
+            #     authorized = telethon_data["client"].is_user_authorized()
+            #     telethon_data["client"].disconnect()
+            # except:
+            #     print(traceback.format_exc())
+            #
+            # if not authorized:
+            #     print("User is not authorized.\nSending code request.")
+            #     # ask for code
+            #     pass
+            # else:
+            #     print("Already authorized, no need to insert code.")
 
     def ask_info(self):
         self.phone_window.show()
 
     # Backend connection
 
+    @QtCore.pyqtSlot(str)
+    def add_debug(self, text):
+        self.debug_text.append(text)
+        self.debug_text.moveCursor(QtGui.QTextCursor.End)
+        self.debug_text.ensureCursorVisible()
+
     def send_request(self):
-        self.check_phone()
+        self.add_debug("Запуск.")
+        # self.check_phone()
         data = {
             "links": self.collect_links(),
             "request": self.insert_key_word.text(),
