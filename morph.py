@@ -1,10 +1,6 @@
-import traceback
+import re
 
 import pymorphy2
-import re
-from exceptions import SearchException, RequestException
-from traceback import print_stack, print_exc
-import datetime
 
 from parse_json import parse
 
@@ -91,10 +87,7 @@ def is_suitable(request, message):
     is_in = lambda word, message: str(word) in message
     global res
     res = None
-    try:
-        exec(request)
-    except SyntaxError:
-        raise RequestException(request)
+    exec(request)
     return res
 
 
@@ -105,19 +98,14 @@ def is_suitable(request, message):
 
 async def search(request, date_from, date_to):
     request = normalize_request(request)
+    suitable_messages = []
 
-    try:
-        suitable_messages = []
-        posts = parse("channel_messages.json", date_from, date_to)
+    posts = parse("channel_messages.json", date_from, date_to)
 
-        for post in posts:
-            if "message" in post.keys():
-                msg = normalize_message(post["message"])
-                if is_suitable(request, msg):
-                    suitable_messages.append(post)
+    for post in posts:
+        if "message" in post.keys():
+            msg = normalize_message(post["message"])
+            if is_suitable(request, msg):
+                suitable_messages.append(post)
 
-        return suitable_messages
-    except RequestException as error:
-        raise RequestException(error.request)
-    except:
-        print(traceback.format_exc())
+    return suitable_messages

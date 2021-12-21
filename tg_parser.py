@@ -1,20 +1,8 @@
-import asyncio
-import configparser
 import json
-import os
-import traceback
-
-from telethon.client import TelegramBaseClient
-from telethon.sync import TelegramClient
-from telethon import connection
-
 # для корректного переноса времени сообщений в json
-from datetime import date, datetime
+from datetime import datetime
 
-# классы для работы с каналами
-from telethon.tl.functions.channels import GetParticipantsRequest
-from telethon.tl.types import ChannelParticipantsSearch
-
+from telethon.sync import TelegramClient
 # класс для работы с сообщениями
 from telethon.tl.functions.messages import GetHistoryRequest
 
@@ -26,6 +14,9 @@ from telethon.tl.functions.messages import GetHistoryRequest
 # api_id = config['Telegram']['api_id']
 # api_hash = config['Telegram']['api_hash']
 # username = config['Telegram']['username']
+import app_ui
+
+# классы для работы с каналами
 
 telethon_data = {
     "client": None,
@@ -39,7 +30,7 @@ telethon_data = {
 }
 
 
-async def dump_all_messages(channel):
+async def dump_all_messages(channel, date_from):
     client: TelegramClient = telethon_data["client"]
 
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
@@ -70,6 +61,15 @@ async def dump_all_messages(channel):
         if not history.messages:
             break
         messages = history.messages
+
+        current_date = app_ui.date_to_string(
+            messages[0].date.year,
+            messages[0].date.month,
+            messages[0].date.day
+        )
+
+        if current_date < date_from:
+            break
         for message in messages:
             all_messages.append(message.to_dict())
         offset_msg = messages[len(messages) - 1].id
