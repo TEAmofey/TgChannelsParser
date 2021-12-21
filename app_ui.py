@@ -5,10 +5,11 @@ import traceback
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction, QLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction, QLayout, QFileDialog
 from telethon import TelegramClient
 
 import app_ui_classes
+import import_excel
 import main
 import sys
 
@@ -203,7 +204,6 @@ class MainWindow(QMainWindow):
         # ----- Menu -----
         self.menu_bar = QtWidgets.QMenuBar(self)
         self.menu_file = QtWidgets.QMenu(self.menu_bar)
-        self.menu_edit = QtWidgets.QMenu(self.menu_bar)
         self.create_menu_bar()
 
         MainWindow.setMenuBar(self, self.menu_bar)
@@ -211,8 +211,11 @@ class MainWindow(QMainWindow):
         self.status_bar.setObjectName("statusBar")
 
         MainWindow.setStatusBar(self, self.status_bar)
+        self.action_import = QtWidgets.QAction()
+        self.action_import.setObjectName("actionImport")
+        self.action_import.triggered.connect(self.ask_file)
         self.action_edit = QtWidgets.QAction()
-        self.action_edit.setObjectName("actionEdit")
+        self.action_edit.setObjectName("actionConfig")
         self.action_edit.triggered.connect(self.ask_info)
         self.action_exit = QtWidgets.QAction()
         self.action_exit.setObjectName("actionExit")
@@ -252,6 +255,7 @@ class MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(self, _translate("MainWindow", "Telegram search"))
         self.menu_file.setTitle(_translate("MainWindow", "Меню"))
+        self.action_import.setText(_translate("MainWindow", "Импорт..."))
         self.action_edit.setText(_translate("MainWindow", "Конфигурация"))
         self.action_exit.setText(_translate("MainWindow", "Выход"))
 
@@ -360,9 +364,16 @@ class MainWindow(QMainWindow):
         self.menu_file.setObjectName("menuFile")
 
     def fill_menu_bar(self):
+        self.menu_file.addAction(self.action_import)
         self.menu_file.addAction(self.action_edit)
         self.menu_file.addAction(self.action_exit)
         self.menu_bar.addAction(self.menu_file.menuAction())
+
+    def ask_file(self):
+        filename = QFileDialog.getOpenFileName(self,  "")[0]
+        if not filename:
+            return
+        links = import_excel.dump_excel(filename)
 
     #   Action methods
 
@@ -399,8 +410,10 @@ class MainWindow(QMainWindow):
             self.table_links.removeRow(row)
         self.table_links.setRowCount(max(self.begin_row_quantity, self.row_counter))
 
+
     def show_help(self):
         self.help_window.show()
+
 
     def close_app(self):
         self.help_window.close()
@@ -471,6 +484,7 @@ class MainWindow(QMainWindow):
         }
 
         self.parse_handler.insert(data)
+        self.parse_thread.terminate()
         self.parse_thread.start()
 
     def collect_links(self):
