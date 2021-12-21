@@ -1,16 +1,13 @@
 import asyncio
 import re
 import traceback
-
-from telethon import TelegramClient
-
-
-from tg_parser import telethon_data, dump_all_messages
 import app_ui
+import sys
+from telethon import TelegramClient
+from tg_parser import telethon_data, dump_all_messages
 from exceptions import RequestException, SearchException
 from morph import search
 from PyQt5.QtWidgets import QApplication
-import sys
 
 
 def main():
@@ -20,7 +17,7 @@ def main():
     sys.exit(app.exec_())
 
 
-async def parse(data, window, handler):
+async def parse(data, handler):
     try:
         print("Connecting...")
         handler.add_debug("Установка соединения...")
@@ -53,7 +50,8 @@ async def parse(data, window, handler):
         except SearchException:
             handler.add_debug("Произошла ошибка")
         except RequestException as e:
-            handler.add_debug("Неправильный запрос.\nИспользуйте инструкцию (знак вопроса справа от поля ввода ключевых слов).")
+            handler.add_debug("Неправильный запрос.\nИспользуйте инструкцию (знак вопроса справа от поля ввода "
+                              "ключевых слов).")
         except ValueError:
             handler.add_debug(4 * ' ' + "Канал {} не найден.".format(link))
         except:
@@ -66,8 +64,8 @@ async def parse(data, window, handler):
     handler.add_debug("Поиск завершен.")
 
 
-def start(data, window, handler):
-    asyncio.run(parse(data, window, handler))
+def start(data, handler):
+    asyncio.run(parse(data, handler))
 
 
 if __name__ == "__main__":

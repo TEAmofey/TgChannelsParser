@@ -470,7 +470,7 @@ class MainWindow(QMainWindow):
             "date_to": date_to_string(self.date_field_to.date())
         }
 
-        self.parse_handler.insert(data, self)
+        self.parse_handler.insert(data)
         self.parse_thread.start()
 
     def collect_links(self):
