@@ -1,13 +1,15 @@
 import asyncio
-import re
-import traceback
-import app_ui
 import sys
+import traceback
+
+from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
-from tg_parser import telethon_data, dump_all_messages
+
+import app_ui
 from exceptions import RequestException, SearchException
 from morph import search
-from PyQt5.QtWidgets import QApplication
+from tg_parser import telethon_data, dump_all_messages
+from to_excel import save_all_channels
 
 
 def main():
@@ -31,6 +33,7 @@ async def parse(data, handler):
 
     print("Connected. Starting search.")
     handler.add_debug("Соединение установлено.\nНачало поиска.")
+    channels_with_messages = {}
     for link in data["links"]:
         try:
             handler.add_debug(4 * ' ' + "Текущий канал: {}".format(link))
@@ -47,6 +50,8 @@ async def parse(data, handler):
 
             handler.add_debug(12 * ' ' + "Найдено подходящих постов: {}.".format(len(dicts_of_posts)))
 
+            channels_with_messages[link] = dicts_of_posts
+
         except SearchException:
             handler.add_debug("Произошла ошибка")
         except RequestException as e:
@@ -57,9 +62,11 @@ async def parse(data, handler):
         except:
             handler.add_debug(traceback.format_exc())
 
+    save_all_channels(channels_with_messages, "result.xlsx")
+
     if telethon_data["client"] is not None and telethon_data["client"].is_connected():
         await telethon_data["client"].disconnect()
-        # handler.add_debug("Disconnected.")
+        print("Disconnected.")
 
     handler.add_debug("Поиск завершен.")
 
