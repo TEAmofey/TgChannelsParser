@@ -57,13 +57,11 @@ class TelethonHandler(QObject):
 
 class ParseHandler(QObject):
     data = None
-    window = None
 
     debug_append = QtCore.pyqtSignal(str)
 
-    def insert(self, data, window):
+    def insert(self, data):
         self.data = data
-        self.window = window
 
     def add_debug(self, text):
         self.debug_append.emit(text)
@@ -71,7 +69,7 @@ class ParseHandler(QObject):
     def run(self):
         print("Launching parse from UI")
         print("Links: {}".format(self.data["links"]))
-        main.start(self.data, self.window, self)
+        main.start(self.data, self)
 
 
 ''' Pop-up windows section'''
