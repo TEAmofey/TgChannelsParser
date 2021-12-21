@@ -20,7 +20,6 @@ def main():
 
 
 async def parse(data, handler):
-
     # Проверка правильности запроса
 
     try:
@@ -43,7 +42,8 @@ async def parse(data, handler):
         telethon_data["client"] = TelegramClient(
             telethon_data["username"],
             int(telethon_data["api_id"]),
-            telethon_data["api_hash"])
+            telethon_data["api_hash"]
+        )
         await telethon_data["client"].start()
     except:
         handler.add_debug(traceback.format_exc())

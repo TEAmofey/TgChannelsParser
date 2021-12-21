@@ -368,15 +368,24 @@ class MainWindow(QMainWindow):
         self.menu_bar.addAction(self.menu_file.menuAction())
 
     def ask_file(self):
-        filename = QFileDialog.getOpenFileName(self,  "")[0]
+        filename = QFileDialog.getOpenFileName(self,  filter="Таблицы Excel (*.xls*)")[0]
         if not filename:
             return
-        links = import_excel.dump_excel(filename)
+        try:
+            links = import_excel.dump_excel(filename)
+            for link in links:
+                self.insert_link.setText(link)
+                self.add_channel()
+            self.insert_link.clear()
+        except:
+            print("not-implemented-pop-up: Импорт таблицы")
+            print(traceback.format_exc())
 
     #   Action methods
 
     def add_channel(self):
         channel = self.insert_link.text()
+
         if channel == "":
             return
         if self.row_counter >= self.begin_row_quantity:
