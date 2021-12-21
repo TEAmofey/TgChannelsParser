@@ -1,10 +1,9 @@
 import asyncio
 import re
-import time
 import traceback
 
 from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtCore import QThread, QObject
+from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QMainWindow, QFrame
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
@@ -57,11 +56,14 @@ class TelethonHandler(QObject):
 
 class ParseHandler(QObject):
     data = None
+    thread = None
 
     debug_append = QtCore.pyqtSignal(str)
 
-    def insert(self, data):
+
+    def insert(self, data, thread):
         self.data = data
+        self.thread = thread
 
     def add_debug(self, text):
         self.debug_append.emit(text)

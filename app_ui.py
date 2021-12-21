@@ -3,23 +3,21 @@ import os
 import traceback
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut, QSystemTrayIcon, QAction, QLayout, QFileDialog
-from telethon import TelegramClient
+from PyQt5.QtWidgets import QMainWindow, QShortcut, QFileDialog
 
 import app_ui_classes
 import import_excel
-import main
-import sys
-
 from tg_parser import telethon_data
 
 
-def date_to_string(date):
-    year = str(date.year())
-    month = str(date.month())
-    day = str(date.day())
+def qdate_to_string(date):
+    return date_to_string(date.year(), date.month(), date.day())
+
+def date_to_string(year, month, day):
+    year = str(year)
+    month = str(month)
+    day = str(day)
     return "{}-{}-{}".format(
         '0' * (4 - len(year)) + year,
         '0' * (2 - len(month)) + month,
@@ -479,12 +477,11 @@ class MainWindow(QMainWindow):
         data = {
             "links": self.collect_links(),
             "request": self.insert_key_word.text(),
-            "date_from": date_to_string(self.date_field_from.date()),
-            "date_to": date_to_string(self.date_field_to.date())
+            "date_from": qdate_to_string(self.date_field_from.date()),
+            "date_to": qdate_to_string(self.date_field_to.date())
         }
 
-        self.parse_handler.insert(data)
-        self.parse_thread.terminate()
+        self.parse_handler.insert(data, self.parse_thread)
         self.parse_thread.start()
 
     def collect_links(self):
