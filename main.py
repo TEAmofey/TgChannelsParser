@@ -9,6 +9,8 @@ from exceptions import RequestException, SearchException
 from morph import search
 from PyQt5.QtWidgets import QApplication
 
+from to_excel import save_all_channels
+
 
 def main():
     app = QApplication(sys.argv)
@@ -31,6 +33,7 @@ async def parse(data, handler):
 
     print("Connected. Starting search.")
     handler.add_debug("Соединение установлено.\nНачало поиска.")
+    channels_with_messages = {}
     for link in data["links"]:
         try:
             handler.add_debug(4 * ' ' + "Текущий канал: {}".format(link))
@@ -47,6 +50,7 @@ async def parse(data, handler):
 
             handler.add_debug(12 * ' ' + "Найдено подходящих постов: {}.".format(len(dicts_of_posts)))
 
+            channels_with_messages[link] = dicts_of_posts
         except SearchException:
             handler.add_debug("Произошла ошибка")
         except RequestException as e:
@@ -56,6 +60,8 @@ async def parse(data, handler):
             handler.add_debug(4 * ' ' + "Канал {} не найден.".format(link))
         except:
             handler.add_debug(traceback.format_exc())
+
+    save_all_channels(channels_with_messages, "result.xlsx")
 
     if telethon_data["client"] is not None and telethon_data["client"].is_connected():
         await telethon_data["client"].disconnect()
