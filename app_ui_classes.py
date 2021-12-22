@@ -46,7 +46,7 @@ class TelethonHandler(QObject):
             print("Connected.")
         except RuntimeError:
             self.main_window.correct_code = False
-            print("Didn't connect: entered phone, next time will require code.")
+            print("Wrong code")
         except FloodWaitError as e:
             print(traceback.format_exc())
             print("Cooldown. Try again later: {}".format(e.message))
@@ -128,23 +128,12 @@ class PhoneWindow(QMainWindow):
         self.button_get_code = QtWidgets.QPushButton("Получить код")
         self.button_get_code.clicked.connect(self.get_code)
 
-        self.insert_code = QtWidgets.QLineEdit()
-        self.insert_code.setPlaceholderText("Введите код")
-        self.insert_code.setFixedSize(150, 33)
-        self.button_save = QtWidgets.QPushButton("Сохранить")
-        self.button_save.clicked.connect(self.check_code)
-        self.button_pressed = False
-        self.insert_code.setEnabled(False)
-        self.button_save.setEnabled(False)
-
         self.layout = QtWidgets.QVBoxLayout(self.widget)
         self.layout.addWidget(self.insert_phone)
         self.layout.addWidget(self.insert_api_id)
         self.layout.addWidget(self.insert_api_hash)
         self.layout.addWidget(self.insert_username)
         self.layout.addWidget(self.button_get_code)
-        self.layout.addWidget(self.insert_code)
-        self.layout.addWidget(self.button_save)
 
         for pos in range(self.layout.count()):
             if pos < 4:
@@ -177,6 +166,14 @@ class PhoneWindow(QMainWindow):
             telethon_data["api_id"] = self.insert_api_id.text()
             telethon_data["api_hash"] = self.insert_api_hash.text()
             telethon_data["username"] = self.insert_username.text()
+        self.main_window.code_window = CodeWindow(self.main_window)
+        self.main_window.code_window.show()
+        self.close()
+
+
+class CodeWindow(QMainWindow):
+    def __init__(self, main_window):
+        super(CodeWindow, self).__init__()
 
         try:
             telethon_data["client"] = TelegramClient(
@@ -185,16 +182,54 @@ class PhoneWindow(QMainWindow):
                 telethon_data["api_hash"]
             )
             telethon_data["client"].connect()
-            telethon_data["client"].send_code_request(self.insert_phone.text())
+            telethon_data["client"].send_code_request(telethon_data["phone"])
             telethon_data["client"].disconnect()
         except:
             print(traceback.format_exc())
-        self.insert_code.setEnabled(True)
-        self.button_save.setEnabled(True)
+
+        self.main_window = main_window
+        self.main_window.setEnabled(False)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+        CodeWindow.setWindowTitle(self, " ")
+        CodeWindow.setFixedWidth(self, 220)
+        CodeWindow.setFixedHeight(self, 250)
+        CodeWindow.setWindowIcon(self, QtGui.QIcon("images/icon-settings.svg"))
+
+        self.widget = QtWidgets.QWidget()
+        self.setCentralWidget(self.widget)
+
+        self.label = QtWidgets.QLabel(self)
+        telethon_data["phone"] = "+79316006285"
+        self.label.setText("     На номер\n {}\nотправлен код.".format(telethon_data["phone"]))
+        self.label.setFont(QtGui.QFont("Calibri", 11, QtGui.QFont.Bold))
+
+        self.label.adjustSize()
+        self.insert_code = QtWidgets.QLineEdit()
+        self.insert_code.setPlaceholderText("Введите код")
+        self.insert_code.setAlignment(QtCore.Qt.AlignCenter)
+        self.insert_code.setFixedSize(125, 40)
+        self.insert_code.setFont(QtGui.QFont("Calibri", 12, QtGui.QFont.Bold))
+        self.button_save = QtWidgets.QPushButton("Войти")
+        self.button_save.clicked.connect(self.check_code)
+        self.button_save.setFixedSize(100, 40)
+        self.button_save.setFont(QtGui.QFont("Calibri", 11, QtGui.QFont.Bold))
+
+        self.layout = QtWidgets.QVBoxLayout(self.widget)
+        self.layout.addWidget(self.label)
+        self.layout.addSpacing(15)
+        self.layout.addWidget(self.insert_code)
+        self.layout.addSpacing(15)
+        self.layout.addWidget(self.button_save)
+        for i in range(self.layout.count()):
+            self.layout.itemAt(i).setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
 
     def check_code(self):
         telethon_data["code"] = re.sub(r'[^0-9]+', '', self.insert_code.text())
+        print(telethon_data["code"])
         self.main_window.authorize()
+        self.main_window.setEnabled(True)
         self.close()
 
 

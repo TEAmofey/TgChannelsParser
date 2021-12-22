@@ -5,6 +5,7 @@ import traceback
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QFileDialog
+from telethon import TelegramClient
 
 import app_ui_classes
 import import_excel
@@ -230,6 +231,9 @@ class MainWindow(QMainWindow):
         # Help Window
         self.help_window = app_ui_classes.HelpWindow()
 
+        # Code window
+        self.code_window = None
+
         # Phone Window
         self.phone_window = app_ui_classes.PhoneWindow(self)
 
@@ -450,24 +454,24 @@ class MainWindow(QMainWindow):
 
             authorized = False
 
-            # try:
-            #     telethon_data["client"] = TelegramClient(
-            #         telethon_data["username"],
-            #         int(telethon_data["api_id"]),
-            #         telethon_data["api_hash"]
-            #     )
-            #     telethon_data["client"].connect()
-            #     authorized = telethon_data["client"].is_user_authorized()
-            #     telethon_data["client"].disconnect()
-            # except:
-            #     print(traceback.format_exc())
-            #
-            # if not authorized:
-            #     print("User is not authorized.\nSending code request.")
-            #     # ask for code
-            #     pass
-            # else:
-            #     print("Already authorized, no need to insert code.")
+            try:
+                telethon_data["client"] = TelegramClient(
+                    telethon_data["username"],
+                    int(telethon_data["api_id"]),
+                    telethon_data["api_hash"]
+                )
+                telethon_data["client"].connect()
+                authorized = telethon_data["client"].is_user_authorized()
+                telethon_data["client"].disconnect()
+            except:
+                print(traceback.format_exc())
+
+            if not authorized:
+                print("User is not authorized.\nSending code request.")
+                self.code_window = app_ui_classes.CodeWindow(self)
+                self.code_window.show()
+            else:
+                print("Already authorized, no need to insert code.")
 
     def ask_info(self):
         self.phone_window.show()

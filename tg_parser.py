@@ -70,6 +70,7 @@ async def dump_all_messages(channel, date_from):
 
         if current_date < date_from:
             break
+
         for message in messages:
             all_messages.append(message.to_dict())
         offset_msg = messages[len(messages) - 1].id
