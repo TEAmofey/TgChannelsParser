@@ -15,6 +15,7 @@ from tg_parser import telethon_data
 def qdate_to_string(date):
     return date_to_string(date.year(), date.month(), date.day())
 
+
 def date_to_string(year, month, day):
     year = str(year)
     month = str(month)
@@ -372,7 +373,7 @@ class MainWindow(QMainWindow):
         self.menu_bar.addAction(self.menu_file.menuAction())
 
     def ask_file(self):
-        filename = QFileDialog.getOpenFileName(self,  filter="Таблицы Excel (*.xls*)")[0]
+        filename = QFileDialog.getOpenFileName(self, filter="Таблицы Excel (*.xls*)")[0]
         if not filename:
             return
         try:
@@ -421,10 +422,8 @@ class MainWindow(QMainWindow):
             self.table_links.removeRow(row)
         self.table_links.setRowCount(max(self.begin_row_quantity, self.row_counter))
 
-
     def show_help(self):
         self.help_window.show()
-
 
     def close_app(self):
         self.help_window.close()
@@ -485,8 +484,7 @@ class MainWindow(QMainWindow):
         self.debug_text.ensureCursorVisible()
 
     def send_request(self):
-        self.add_debug("Запуск.")
-        # self.check_phone()
+        self.check_phone()
         data = {
             "links": self.collect_links(),
             "request": self.insert_key_word.text(),
@@ -507,7 +505,6 @@ class MainWindow(QMainWindow):
     def authorize(self):
         print("Authorizing...")
         self.first_connect_thread.start()
-
 
 # def application():
 #     app = QApplication(sys.argv)
