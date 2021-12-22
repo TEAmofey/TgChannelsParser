@@ -27,22 +27,6 @@ def date_to_string(year, month, day):
     )
 
 
-def create_check_box(condition):
-    widget_check_box = QtWidgets.QWidget()
-    check_box = QtWidgets.QCheckBox()
-    check_box.setChecked(condition)
-    check_box.setFixedWidth(25)
-    check_box.setFixedHeight(27)
-    with open("styles/check_box.styl", "r") as style:
-        check_box.setStyleSheet(style.read())
-    layout = QtWidgets.QHBoxLayout(widget_check_box)
-    layout.addWidget(check_box)
-
-    layout.setAlignment(QtCore.Qt.AlignCenter)
-    layout.setContentsMargins(0, 0, 0, 0)
-    return widget_check_box
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -337,14 +321,55 @@ class MainWindow(QMainWindow):
     def create_table_links(self):
         self.table_links.setFixedSize(600, 500)
         self.table_links.setObjectName("tableWidget")
-        self.table_links.setColumnCount(2)
+        self.table_links.setColumnCount(3)
         self.table_links.setRowCount(self.begin_row_quantity)
         self.table_links.setFont(self.main_font_medium)
-        self.table_links.setHorizontalHeaderLabels(["Ссылка", "Выбрать"])
-        self.table_links.setColumnWidth(0, 450)
+        self.table_links.setHorizontalHeaderLabels(["Ссылка", "", ""])
+        self.table_links.setColumnWidth(0, 351)
         self.table_links.setColumnWidth(1, 99)
+        self.table_links.setColumnWidth(2, 99)
         self.table_links.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
         self.table_links.setSelectionMode(QtWidgets.QTableWidget.NoSelection)
+
+    def create_check_box(self, condition):
+        widget_check_box = QtWidgets.QWidget()
+        check_box = QtWidgets.QCheckBox()
+        check_box.setChecked(condition)
+        check_box.setFixedSize(25, 25)
+        with open("styles/check_box.styl", "r") as style:
+            check_box.setStyleSheet(style.read())
+
+        layout = QtWidgets.QHBoxLayout(widget_check_box)
+        layout.addWidget(check_box)
+
+        layout.setAlignment(QtCore.Qt.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        return widget_check_box
+
+    def create_bin(self):
+        widget_check_box = QtWidgets.QWidget()
+        button_bin = QtWidgets.QPushButton()
+        button_bin.clicked.connect(self.delete_row_with_button)
+        button_bin.setFixedSize(25, 25)
+        with open("styles/bin.styl", "r") as style:
+            button_bin.setStyleSheet(style.read())
+
+        layout = QtWidgets.QHBoxLayout(widget_check_box)
+        layout.addWidget(button_bin)
+
+        layout.setAlignment(QtCore.Qt.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        return widget_check_box
+
+    @QtCore.pyqtSlot()
+    def delete_row_with_button(self):
+        self.sender().setEnabled(False)
+        for row in range(self.row_counter):
+            if not self.table_links.cellWidget(row, 2).layout().itemAt(0).widget().isEnabled():
+                self.table_links.removeRow(row)
+                break
+        self.row_counter = self.row_counter - 1
+        self.table_links.setRowCount(max(self.begin_row_quantity, self.row_counter))
 
     # Date fields
 
@@ -395,10 +420,13 @@ class MainWindow(QMainWindow):
             return
         if self.row_counter >= self.begin_row_quantity:
             self.table_links.insertRow(self.row_counter)
-        self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel))
 
-        widget_check_box = create_check_box(True)
+        self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel))
+        self.table_links.item(self.row_counter, 0).setTextAlignment(QtCore.Qt.AlignCenter)
+        widget_check_box = self.create_check_box(True)
+        widget_bin = self.create_bin()
         self.table_links.setCellWidget(self.row_counter, 1, widget_check_box)
+        self.table_links.setCellWidget(self.row_counter, 2, widget_bin)
         self.row_counter = self.row_counter + 1
         self.insert_link.clear()
 
