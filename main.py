@@ -23,19 +23,20 @@ async def parse(data, handler):
     # Проверка правильности запроса
 
     try:
-
         message = "Проверка правильности запроса."
         is_in = lambda word, message: str(word) in message
         exec(morph.normalize_request(data["request"]))
         handler.add_debug("Запрос введён корректно.")
 
     except SyntaxError:
-        handler.add_debug("Некорректный запрос.\nИспользуйте инструкцию "
+        handler.add_debug("Некорректный запрос.\n"
+                          "Используйте инструкцию "
                           "(знак вопроса справа от поля ввода "
                           "ключевых слов).")
         handler.thread.terminate()
         return
 
+    handler.add_debug("Запуск")
     try:
         print("Connecting...")
         handler.add_debug("Установка соединения...")
