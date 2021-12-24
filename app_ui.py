@@ -411,8 +411,8 @@ class MainWindow(QMainWindow):
                 self.add_channel()
             self.insert_link.clear()
         except:
-            print("not-implemented-pop-up: Импорт таблицы")
-            print(traceback.format_exc())
+            result = app_ui_classes.PopUpWindow(["Неправильный формат таблицы."]).exec()
+            # print(traceback.format_exc())
 
     #   Action methods
 

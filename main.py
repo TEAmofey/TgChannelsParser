@@ -52,7 +52,7 @@ async def parse(data, handler):
 
                 handler.add_debug(12 * ' ' + "Найдено подходящих постов: {}.".format(len(list_of_posts)))
 
-                channels_with_messages[link] = list_of_posts
+                channels_with_messages[channel.title] = list_of_posts
 
             except ValueError:
                 handler.add_debug(4 * ' ' + "Канал {} не найден.".format(link))
