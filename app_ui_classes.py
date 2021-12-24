@@ -4,7 +4,7 @@ import traceback
 
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QMainWindow, QFrame
+from PyQt5.QtWidgets import QMainWindow, QFrame, QDialog, QVBoxLayout, QDialogButtonBox
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 
@@ -231,6 +231,34 @@ class CodeWindow(QMainWindow):
         self.main_window.authorize()
         self.main_window.setEnabled(True)
         self.close()
+
+class PopUpWindow(QDialog):
+    def __init__(self, messages):
+        super().__init__()
+
+        self.setWindowIcon(QtGui.QIcon("images/icon_error.png"))
+        PopUpWindow.setWindowTitle(self, " ")
+        PopUpWindow.setWindowFlags(self, QtCore.Qt.WindowSystemMenuHint)
+
+        button = QDialogButtonBox.Ok
+
+        self.button_box = QDialogButtonBox(button)
+        self.button_box.setFont(QtGui.QFont("Calibri", 10, QtGui.QFont.Bold))
+        self.button_box.accepted.connect(self.accept)
+
+        self.layout = QVBoxLayout()
+        for message in messages:
+            label = QtWidgets.QLabel(message)
+            label.setFont(QtGui.QFont("Calibri", 10))
+            self.layout.addWidget(label)
+        self.layout.addWidget(self.button_box)
+
+        for i in range(self.layout.count()):
+            self.layout.itemAt(i).setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.setLayout(self.layout)
+
 
 
 help_text = ("\t\tКак работает поиск по ключевым словам?\n"

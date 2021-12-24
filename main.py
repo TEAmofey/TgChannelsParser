@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
 
 import app_ui
-import morph
 from morph import search
 from tg_parser import telethon_data, dump_all_messages
 from to_excel import save_all_channels
@@ -20,22 +19,6 @@ def main():
 
 
 async def parse(data, handler):
-    # Проверка правильности запроса
-
-    try:
-        message = "Проверка правильности запроса."
-        is_in = lambda word, message: str(word) in message
-        exec(morph.normalize_request(data["request"]))
-        handler.add_debug("Запрос введён корректно.")
-
-    except SyntaxError:
-        handler.add_debug("Некорректный запрос.\n"
-                          "Используйте инструкцию "
-                          "(знак вопроса справа от поля ввода "
-                          "ключевых слов).")
-        handler.thread.terminate()
-        return
-
     handler.add_debug("Запуск")
     try:
         print("Connecting...")
@@ -82,7 +65,9 @@ async def parse(data, handler):
 
     save_all_channels(channels_with_messages, "result.xlsx")
 
+    handler.add_debug("Результат помещен в result.xlsx.")
     handler.add_debug("Поиск завершен.\n")
+
     handler.thread.terminate()
 
 
