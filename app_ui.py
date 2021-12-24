@@ -1,3 +1,4 @@
+import asyncio
 import configparser
 import os
 import traceback
@@ -9,6 +10,7 @@ from telethon import TelegramClient
 
 import app_ui_classes
 import import_excel
+import morph
 from tg_parser import telethon_data
 
 
@@ -321,13 +323,14 @@ class MainWindow(QMainWindow):
     def create_table_links(self):
         self.table_links.setFixedSize(600, 500)
         self.table_links.setObjectName("tableWidget")
-        self.table_links.setColumnCount(3)
+        self.table_links.setColumnCount(4)
         self.table_links.setRowCount(self.begin_row_quantity)
         self.table_links.setFont(self.main_font_medium)
-        self.table_links.setHorizontalHeaderLabels(["Ссылка", "", ""])
-        self.table_links.setColumnWidth(0, 351)
-        self.table_links.setColumnWidth(1, 99)
-        self.table_links.setColumnWidth(2, 99)
+        self.table_links.setHorizontalHeaderLabels(["Название", "Ссылка", "", ""])
+        self.table_links.setColumnWidth(0, 200)
+        self.table_links.setColumnWidth(1, 249)
+        self.table_links.setColumnWidth(2, 50)
+        self.table_links.setColumnWidth(3, 50)
         self.table_links.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
         self.table_links.setSelectionMode(QtWidgets.QTableWidget.NoSelection)
 
@@ -365,7 +368,7 @@ class MainWindow(QMainWindow):
     def delete_row_with_button(self):
         self.sender().setEnabled(False)
         for row in range(self.row_counter):
-            if not self.table_links.cellWidget(row, 2).layout().itemAt(0).widget().isEnabled():
+            if not self.table_links.cellWidget(row, 3).layout().itemAt(0).widget().isEnabled():
                 self.table_links.removeRow(row)
                 break
         self.row_counter = self.row_counter - 1
@@ -414,19 +417,44 @@ class MainWindow(QMainWindow):
     #   Action methods
 
     def add_channel(self):
-        channel = self.insert_link.text()
+        link = self.insert_link.text()
+        channel = None
 
-        if channel == "":
+        try:
+            async def connect():
+                telethon_data["client"] = TelegramClient(
+                    telethon_data["username"],
+                    int(telethon_data["api_id"]),
+                    telethon_data["api_hash"]
+                )
+                await telethon_data["client"].start()
+
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(connect())
+
+            channel = telethon_data["client"].get_entity(link)
+        except ValueError:
+            result = app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
             return
+        except:
+            print(traceback.format_exc())
+        finally:
+            telethon_data["client"].disconnect()
+
+
         if self.row_counter >= self.begin_row_quantity:
             self.table_links.insertRow(self.row_counter)
 
-        self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel))
+        self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel.title))
         self.table_links.item(self.row_counter, 0).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table_links.setItem(self.row_counter, 1, QtWidgets.QTableWidgetItem(link))
+        self.table_links.item(self.row_counter, 1).setTextAlignment(QtCore.Qt.AlignCenter)
         widget_check_box = self.create_check_box(True)
         widget_bin = self.create_bin()
-        self.table_links.setCellWidget(self.row_counter, 1, widget_check_box)
-        self.table_links.setCellWidget(self.row_counter, 2, widget_bin)
+        self.table_links.setCellWidget(self.row_counter, 2, widget_check_box)
+        self.table_links.setCellWidget(self.row_counter, 3, widget_bin)
         self.row_counter = self.row_counter + 1
         self.insert_link.clear()
 
@@ -438,12 +466,12 @@ class MainWindow(QMainWindow):
 
     def set_checkboxes(self, condition):
         for row in range(self.row_counter):
-            self.table_links.cellWidget(row, 1).layout().itemAt(0).widget().setChecked(condition)
+            self.table_links.cellWidget(row, 2).layout().itemAt(0).widget().setChecked(condition)
 
     def delete_chosen(self):
         chosen = []
         for row in range(self.row_counter):
-            if self.table_links.cellWidget(row, 1).layout().itemAt(0).widget().isChecked():
+            if self.table_links.cellWidget(row, 2).layout().itemAt(0).widget().isChecked():
                 chosen.append(row)
         self.row_counter = self.row_counter - len(chosen)
         for row in reversed(chosen):
@@ -458,6 +486,28 @@ class MainWindow(QMainWindow):
         self.close()
 
     # Config stuff
+
+    def check_authorized(self):
+        authorized = False
+
+        try:
+            telethon_data["client"] = TelegramClient(
+                telethon_data["username"],
+                int(telethon_data["api_id"]),
+                telethon_data["api_hash"]
+            )
+            telethon_data["client"].connect()
+            authorized = telethon_data["client"].is_user_authorized()
+            telethon_data["client"].disconnect()
+        except:
+            print(traceback.format_exc())
+
+        if not authorized:
+            print("User is not authorized.\nSending code request.")
+            self.code_window = app_ui_classes.CodeWindow(self)
+            self.code_window.show()
+        else:
+            print("Already authorized, no need to insert code.")
 
     def check_phone(self):
         if not os.path.exists('config.ini'):
@@ -479,31 +529,16 @@ class MainWindow(QMainWindow):
                 print(traceback.format_exc())
                 print("Config parsing ERROR")
 
-            authorized = False
-
-            try:
-                telethon_data["client"] = TelegramClient(
-                    telethon_data["username"],
-                    int(telethon_data["api_id"]),
-                    telethon_data["api_hash"]
-                )
-                telethon_data["client"].connect()
-                authorized = telethon_data["client"].is_user_authorized()
-                telethon_data["client"].disconnect()
-            except:
-                print(traceback.format_exc())
-
-            if not authorized:
-                print("User is not authorized.\nSending code request.")
-                self.code_window = app_ui_classes.CodeWindow(self)
-                self.code_window.show()
-            else:
-                print("Already authorized, no need to insert code.")
+            self.check_authorized()
 
     def ask_info(self):
         self.phone_window.show()
 
     # Backend connection
+
+    @QtCore.pyqtSlot(str)
+    def pop_up(self, messages):
+        result = app_ui_classes.PopUpWindow(messages)
 
     @QtCore.pyqtSlot(str)
     def add_debug(self, text):
@@ -513,6 +548,22 @@ class MainWindow(QMainWindow):
 
     def send_request(self):
         self.check_phone()
+
+        try:
+            message = "Проверка правильности запроса."
+            is_in = lambda word, message: str(word) in message
+            exec(morph.normalize_request(self.insert_key_word.text()))
+            self.add_debug("Запрос введён корректно.")
+
+        except SyntaxError:
+            result = app_ui_classes.PopUpWindow(["Некорректный запрос.",
+                                "Используйте инструкцию",
+                                "(знак вопроса справа от поля ввода "
+                                "ключевых слов)."]).exec()
+            return
+        except:
+            print(traceback.format_exc())
+
         data = {
             "links": self.collect_links(),
             "request": self.insert_key_word.text(),
@@ -526,8 +577,8 @@ class MainWindow(QMainWindow):
     def collect_links(self):
         channels = []
         for row in range(self.row_counter):
-            if self.table_links.cellWidget(row, 1).layout().itemAt(0).widget().isChecked():
-                channels.append(self.table_links.item(row, 0).text())
+            if self.table_links.cellWidget(row, 2).layout().itemAt(0).widget().isChecked():
+                channels.append(self.table_links.item(row, 1).text())
         return channels
 
     def authorize(self):
