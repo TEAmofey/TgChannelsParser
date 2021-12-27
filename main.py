@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import sys
 import traceback
 
@@ -63,9 +64,13 @@ async def parse(data, handler):
             await telethon_data["client"].disconnect()
             print("Disconnected.")
 
-    save_all_channels(channels_with_messages, "result.xlsx")
+    current_datetime = datetime.now()
+    filename = f"Результаты от " \
+               f"[{current_datetime.date()}] " \
+               f"{current_datetime.hour}:{current_datetime.minute}:{current_datetime.second}.xlsx"
+    save_all_channels(channels_with_messages, filename)
 
-    handler.add_debug("Результат помещен в result.xlsx.")
+    handler.add_debug(f"Результат помещен в {filename}.")
     handler.add_debug("Поиск завершен.\n")
 
     handler.thread.terminate()
