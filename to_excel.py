@@ -13,17 +13,27 @@ def file_to_json(file_name):
 
 
 def save_all_channels(dictionary, exel_file_name):
-    print(dictionary.items())
     writer = pd.ExcelWriter(exel_file_name)
+    append_data_to_excel("Общий список", "Назвние", [{"message": "Сообщение", "date": "Дата"}], writer, start_row=0)
+    row_number = 1
     for channel in dictionary.items():
-        save_one_channel_messages_to_exel(channel[0], channel[1], writer)
-        save_one_channel_messages_to_exel("Общий список", channel[1], writer)
+        append_data_to_excel("Общий список", channel[0], channel[1], writer, start_row=row_number)
+        row_number += len(channel[1])
+        save_one_channel_messages_to_excel(channel[0], channel[1], writer)
     # writer.save()
     writer.close()
 
 
-def save_one_channel_messages_to_exel(sheet_name, json_data, exel_writer):
-    pd.json_normalize(json_data).to_excel(exel_writer, sheet_name=sheet_name)
+def save_one_channel_messages_to_excel(sheet_name, json_data, excel_writer):
+    pd.json_normalize(json_data).to_excel(excel_writer, sheet_name=sheet_name)
 
 
-# save_all_channels(file_to_json(input_name), output_name)
+def append_data_to_excel(sheet_name, channel_name, json_data, excel_writer, start_row):
+    df = pd.json_normalize(json_data)
+    df.insert(0, 'Название канала', channel_name)
+    df.to_excel(excel_writer,
+                sheet_name=sheet_name,
+                startrow=start_row,
+                index=False,
+                header=False,
+                index_label=channel_name)
