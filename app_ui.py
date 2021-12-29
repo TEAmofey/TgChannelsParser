@@ -445,12 +445,17 @@ class MainWindow(QMainWindow):
         finally:
             telethon_data["client"].disconnect()
 
-        if self.row_counter >= self.begin_row_quantity:
-            self.table_links.insertRow(self.row_counter)
-
         if not type(channel) == Channel:
             app_ui_classes.PopUpWindow([f'"{link}"', "не является каналом."]).exec()
             return
+        for i in range(self.row_counter):
+            if self.table_links.item(i, 1).text() == link:
+                app_ui_classes.PopUpWindow(["Канал", f'"{link}"', "уже есть в списке."]).exec()
+                self.insert_link.clear()
+                return
+
+        if self.row_counter >= self.begin_row_quantity:
+            self.table_links.insertRow(self.row_counter)
 
         self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel.title))
         self.table_links.item(self.row_counter, 0).setTextAlignment(QtCore.Qt.AlignCenter)
