@@ -438,19 +438,18 @@ class MainWindow(QMainWindow):
 
             channel = telethon_data["client"].get_entity(link)
         except ValueError:
-            app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
+            app_ui_classes.PopUpWindow(["Канал", f'"{link}"', "не найден."]).exec()
             return
         except:
             print(traceback.format_exc())
         finally:
             telethon_data["client"].disconnect()
 
-
         if self.row_counter >= self.begin_row_quantity:
             self.table_links.insertRow(self.row_counter)
 
         if not type(channel) == Channel:
-            app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
+            app_ui_classes.PopUpWindow([f'"{link}"', "не является каналом."]).exec()
             return
 
         self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel.title))
@@ -568,9 +567,9 @@ class MainWindow(QMainWindow):
 
         except SyntaxError:
             result = app_ui_classes.PopUpWindow(["Некорректный запрос.",
-                                "Используйте инструкцию",
-                                "(знак вопроса справа от поля ввода "
-                                "ключевых слов)."]).exec()
+                                                 "Используйте инструкцию",
+                                                 "(знак вопроса справа от поля ввода "
+                                                 "ключевых слов)."]).exec()
             return
         except:
             print(traceback.format_exc())
