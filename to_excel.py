@@ -2,9 +2,6 @@ import json
 
 import pandas as pd
 
-input_name = "messages.json"  # Имя json файла
-output_name = "messages.xlsx"  # Имя json файла
-
 
 def file_to_json(file_name):
     json_file = open(file_name, 'r', encoding="utf-8")
@@ -12,8 +9,8 @@ def file_to_json(file_name):
     return json_data
 
 
-def save_all_channels(dictionary, exel_file_name):
-    writer = pd.ExcelWriter(exel_file_name)
+def save_all_channels(dictionary, excel_file_name):
+    writer = pd.ExcelWriter(excel_file_name)
     append_data_to_excel("Общий список", "Назвние", [{"message": "Сообщение", "date": "Дата"}], writer, start_row=0)
     row_number = 1
     for channel in dictionary.items():

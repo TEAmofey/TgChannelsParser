@@ -67,7 +67,7 @@ async def parse(data, handler):
     current_datetime = datetime.now()
     filename = f"Результаты от " \
                f"[{current_datetime.date()}] " \
-               f"{current_datetime.hour}:{current_datetime.minute}:{current_datetime.second}.xlsx"
+               f"{str(current_datetime.time())[:-7]}.xlsx"
     save_all_channels(channels_with_messages, filename)
 
     handler.add_debug(f"Результат помещен в {filename}.")
