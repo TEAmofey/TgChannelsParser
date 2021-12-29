@@ -2,6 +2,7 @@ import asyncio
 import configparser
 import os
 import traceback
+from datetime import datetime
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
@@ -13,6 +14,7 @@ import app_ui_classes
 import import_excel
 import morph
 from tg_parser import telethon_data
+from to_excel import save_all_channels
 
 
 def qdate_to_string(date):
@@ -230,6 +232,7 @@ class MainWindow(QMainWindow):
         self.parse_handler.moveToThread(self.parse_thread)
         self.parse_handler.debug_append.connect(self.add_debug)
         self.parse_handler.enable_buttons.connect(self.enable_buttons)
+        self.parse_handler.save.connect(self.save_file)
         self.parse_thread.started.connect(self.parse_handler.run)
 
         self.first_connect_thread = QtCore.QThread()
@@ -560,6 +563,18 @@ class MainWindow(QMainWindow):
     def enable_buttons(self):
         self.button_add_link.setEnabled(True)
         self.button_start.setEnabled(True)
+
+    @QtCore.pyqtSlot(dict)
+    def save_file(self, results):
+        current_datetime = datetime.now()
+        preferred_name = f"Результаты/Результаты от " \
+                   f"[{str(current_datetime.date()).replace('-', '_')}] " \
+                   f"{str(current_datetime.time())[:-7].replace(':', '-')}"
+        filename = ""
+        while filename == "":
+            filename = QFileDialog.getSaveFileName(self, "Caption", preferred_name, filter="Таблицы Excel (*.xlsx)")[0]
+        save_all_channels(results, filename)
+        self.add_debug(f"Результат помещен в {filename}.\n")
 
     def send_request(self):
         self.check_phone()

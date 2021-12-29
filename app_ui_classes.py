@@ -60,6 +60,10 @@ class ParseHandler(QObject):
 
     debug_append = QtCore.pyqtSignal(str)
     enable_buttons = QtCore.pyqtSignal()
+    save = QtCore.pyqtSignal(dict)
+
+    def save_file(self, results):
+        self.save.emit(results)
 
     def activate_buttons(self):
         self.enable_buttons.emit()
