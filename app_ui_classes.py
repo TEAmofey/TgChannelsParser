@@ -200,7 +200,6 @@ class CodeWindow(QMainWindow):
         self.setCentralWidget(self.widget)
 
         self.label = QtWidgets.QLabel(self)
-        telethon_data["phone"] = "+79316006285"
         self.label.setText("     На номер\n {}\nотправлен код.".format(telethon_data["phone"]))
         self.label.setFont(QtGui.QFont("Calibri", 11, QtGui.QFont.Bold))
 
