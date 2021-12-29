@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QFileDialog
 from telethon import TelegramClient
+from telethon.tl.types import Channel
 
 import app_ui_classes
 import import_excel
@@ -411,7 +412,7 @@ class MainWindow(QMainWindow):
                 self.add_channel()
             self.insert_link.clear()
         except:
-            result = app_ui_classes.PopUpWindow(["Неправильный формат таблицы."]).exec()
+            app_ui_classes.PopUpWindow(["Неправильный формат таблицы."]).exec()
             # print(traceback.format_exc())
 
     #   Action methods
@@ -436,7 +437,7 @@ class MainWindow(QMainWindow):
 
             channel = telethon_data["client"].get_entity(link)
         except ValueError:
-            result = app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
+            app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
             return
         except:
             print(traceback.format_exc())
@@ -446,6 +447,10 @@ class MainWindow(QMainWindow):
 
         if self.row_counter >= self.begin_row_quantity:
             self.table_links.insertRow(self.row_counter)
+
+        if not type(channel) == Channel:
+            app_ui_classes.PopUpWindow(["Канал", "\"{}\"".format(link), "не найден."]).exec()
+            return
 
         self.table_links.setItem(self.row_counter, 0, QtWidgets.QTableWidgetItem(channel.title))
         self.table_links.item(self.row_counter, 0).setTextAlignment(QtCore.Qt.AlignCenter)
@@ -546,6 +551,11 @@ class MainWindow(QMainWindow):
         self.debug_text.moveCursor(QtGui.QTextCursor.End)
         self.debug_text.ensureCursorVisible()
 
+    @QtCore.pyqtSlot()
+    def enable_buttons(self):
+        self.button_add_link.setEnabled(True)
+        self.button_start.setEnabled(True)
+
     def send_request(self):
         self.check_phone()
 
@@ -570,6 +580,9 @@ class MainWindow(QMainWindow):
             "date_from": qdate_to_string(self.date_field_from.date()),
             "date_to": qdate_to_string(self.date_field_to.date())
         }
+
+        self.button_add_link.setEnabled(False)
+        self.button_start.setEnabled(False)
 
         self.parse_handler.insert(data, self.parse_thread)
         self.parse_thread.start()

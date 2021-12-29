@@ -78,6 +78,8 @@ async def parse(data, handler):
 
     handler.add_debug("Поиск завершен.\n")
 
+    handler.activate_buttons()
+
     handler.thread.terminate()
 
 
