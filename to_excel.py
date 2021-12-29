@@ -1,5 +1,4 @@
 import json
-import os.path
 
 import pandas as pd
 
@@ -11,9 +10,6 @@ def file_to_json(file_name):
 
 
 def save_all_channels(dictionary, excel_file_name):
-    if not os.path.exists("Результаты"):
-        os.mkdir("Результаты")
-
     writer = pd.ExcelWriter(excel_file_name)
     append_data_to_excel("Общий список", "Назвние", [{"message": "Сообщение", "date": "Дата"}], writer, start_row=0)
     row_number = 1
