@@ -43,11 +43,11 @@ async def parse(data, handler):
 
                 channel = await telethon_data["client"].get_entity(link)
 
-                handler.add_debug(8 * ' ' + "Канал найден. Ищем подходящие посты...")
+                handler.add_debug(8 * ' ' + "Канал найден. Скачиваем все посты...")
 
                 await dump_all_messages(channel, data["date_from"])
 
-                handler.add_debug(8 * ' ' + "Посты найдены. Начинаем поиск ключевых слов.")
+                handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск ключевых слов.")
 
                 list_of_posts = await (search(data["request"], data["date_from"], data["date_to"]))
 

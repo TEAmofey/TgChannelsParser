@@ -242,6 +242,7 @@ class PopUpWindow(QDialog):
         self.setWindowIcon(QtGui.QIcon("images/icon_error.png"))
         PopUpWindow.setWindowTitle(self, " ")
         PopUpWindow.setWindowFlags(self, QtCore.Qt.WindowSystemMenuHint)
+        PopUpWindow.setMinimumSize(self, 200, 100)
 
         button = QDialogButtonBox.Ok
 
