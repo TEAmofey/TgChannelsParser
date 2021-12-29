@@ -229,6 +229,7 @@ class MainWindow(QMainWindow):
         self.parse_handler = app_ui_classes.ParseHandler()
         self.parse_handler.moveToThread(self.parse_thread)
         self.parse_handler.debug_append.connect(self.add_debug)
+        self.parse_handler.enable_buttons.connect(self.enable_buttons)
         self.parse_thread.started.connect(self.parse_handler.run)
 
         self.first_connect_thread = QtCore.QThread()
