@@ -1,7 +1,6 @@
 import asyncio
 import sys
 import traceback
-from datetime import datetime
 
 from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
@@ -9,7 +8,6 @@ from telethon import TelegramClient
 import app_ui
 from morph import search
 from tg_parser import telethon_data, dump_all_messages
-from to_excel import save_all_channels
 
 
 def main():
@@ -64,15 +62,8 @@ async def parse(data, handler):
             await telethon_data["client"].disconnect()
             print("Disconnected.")
 
-    current_datetime = datetime.now()
-
     try:
-        filename = f"Результаты/Результаты от " \
-                   f"[{str(current_datetime.date()).replace('-', '_')}] " \
-                   f"{str(current_datetime.time())[:-7].replace(':', '-')}.xlsx"
-        save_all_channels(channels_with_messages, filename)
-
-        handler.add_debug(f"Результат помещен в {filename}.")
+        handler.save_file(channels_with_messages)
     except:
         handler.add_debug(traceback.format_exc())
 
