@@ -567,6 +567,8 @@ class MainWindow(QMainWindow):
     @QtCore.pyqtSlot(dict)
     def save_file(self, results):
         current_datetime = datetime.now()
+        if not os.path.exists("Результаты"):
+            os.mkdir("Результаты")
         preferred_name = f"Результаты/Результаты от " \
                    f"[{str(current_datetime.date()).replace('-', '_')}] " \
                    f"{str(current_datetime.time())[:-7].replace(':', '-')}"
