@@ -59,6 +59,10 @@ class ParseHandler(QObject):
     thread = None
 
     debug_append = QtCore.pyqtSignal(str)
+    enable_buttons = QtCore.pyqtSignal()
+
+    def activate_buttons(self):
+        self.enable_buttons.emit()
 
     def insert(self, data, thread):
         self.data = data
