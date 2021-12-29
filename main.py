@@ -1,7 +1,7 @@
 import asyncio
-from datetime import datetime
 import sys
 import traceback
+from datetime import datetime
 
 from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
@@ -43,11 +43,11 @@ async def parse(data, handler):
 
                 channel = await telethon_data["client"].get_entity(link)
 
-                handler.add_debug(8 * ' ' + "Канал найден. Скачиваем все посты...")
+                handler.add_debug(8 * ' ' + "Канал найден. Ищем подходящие посты...")
 
                 await dump_all_messages(channel, data["date_from"])
 
-                handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск ключевых слов.")
+                handler.add_debug(8 * ' ' + "Посты найдены. Начинаем поиск ключевых слов.")
 
                 list_of_posts = await (search(data["request"], data["date_from"], data["date_to"]))
 
@@ -65,12 +65,17 @@ async def parse(data, handler):
             print("Disconnected.")
 
     current_datetime = datetime.now()
-    filename = f"Результаты от " \
-               f"[{current_datetime.date()}] " \
-               f"{str(current_datetime.time())[:-7]}.xlsx"
-    save_all_channels(channels_with_messages, filename)
 
-    handler.add_debug(f"Результат помещен в {filename}.")
+    try:
+        filename = f"Результаты/Результаты от " \
+                   f"[{str(current_datetime.date()).replace('-', '_')}] " \
+                   f"{str(current_datetime.time())[:-7].replace(':', '-')}.xlsx"
+        save_all_channels(channels_with_messages, filename)
+
+        handler.add_debug(f"Результат помещен в {filename}.")
+    except:
+        handler.add_debug(traceback.format_exc())
+
     handler.add_debug("Поиск завершен.\n")
 
     handler.thread.terminate()
