@@ -60,7 +60,6 @@ class ParseHandler(QObject):
 
     debug_append = QtCore.pyqtSignal(str)
 
-
     def insert(self, data, thread):
         self.data = data
         self.thread = thread
@@ -144,6 +143,11 @@ class PhoneWindow(QMainWindow):
         self.setLayout(self.layout)
 
     def get_code(self):
+        self.insert_phone.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_phone.text()))
+        self.insert_api_id.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_id.text()))
+        self.insert_api_hash.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_hash.text()))
+        self.insert_username.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_username.text()))
+
         with open('config.ini', 'w') as cf:
             cf.write("[Telegram]\n"
                      "phone = {}\n"
@@ -156,11 +160,6 @@ class PhoneWindow(QMainWindow):
                 self.insert_username.text()
             )
             )
-
-            self.insert_phone.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_phone.text()))
-            self.insert_api_id.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_id.text()))
-            self.insert_api_hash.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_hash.text()))
-            self.insert_username.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_username.text()))
 
             telethon_data["phone"] = self.insert_phone.text()
             telethon_data["api_id"] = self.insert_api_id.text()
@@ -231,6 +230,7 @@ class CodeWindow(QMainWindow):
         self.main_window.setEnabled(True)
         self.close()
 
+
 class PopUpWindow(QDialog):
     def __init__(self, messages):
         super().__init__()
@@ -257,7 +257,6 @@ class PopUpWindow(QDialog):
         self.layout.setAlignment(QtCore.Qt.AlignCenter)
 
         self.setLayout(self.layout)
-
 
 
 help_text = ("\t\tКак работает поиск по ключевым словам?\n"
