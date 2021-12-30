@@ -11,7 +11,7 @@ def file_to_json(file_name):
 
 def save_all_channels(dictionary, excel_file_name):
     writer = pd.ExcelWriter(excel_file_name)
-    append_data_to_excel("Общий список", "Назвние", [{"message": "Сообщение", "date": "Дата"}], writer, start_row=0)
+    append_data_to_excel("Общий список", "Название", [{"message": "Сообщение", "date": "Дата"}], writer, start_row=0)
     row_number = 1
     for channel in dictionary.items():
         append_data_to_excel("Общий список", channel[0], channel[1], writer, start_row=row_number)

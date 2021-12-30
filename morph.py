@@ -5,7 +5,7 @@ import pymorphy2
 from parse_json import parse
 
 # Создаем объект класса-анализатора
-morph = pymorphy2.MorphAnalyzer()
+morph = pymorphy2.MorphAnalyzer(path="pymorphy2_dicts_ru/data")
 
 ''' функция приведения слова в начальную форму '''
 
