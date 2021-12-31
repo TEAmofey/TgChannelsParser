@@ -45,7 +45,7 @@ async def parse(data, handler):
 
                 await dump_all_messages(channel, data["date_from"])
 
-                handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск ключевых слов.")
+                handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск по ключевым словам.")
 
                 list_of_posts = await (search(data["request"], data["date_from"], data["date_to"]))
 
