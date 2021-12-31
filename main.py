@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
 
 import app_ui
+import app_ui_classes
 from morph import search
 from tg_parser import telethon_data, dump_all_messages
 

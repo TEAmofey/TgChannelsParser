@@ -8,6 +8,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QFileDialog
 from telethon import TelegramClient
+from telethon.errors import FloodWaitError
 from telethon.tl.types import Channel
 
 import app_ui_classes

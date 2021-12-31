@@ -156,6 +156,14 @@ class PhoneWindow(QMainWindow):
         self.insert_api_hash.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_hash.text()))
         self.insert_username.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_username.text()))
 
+        # try:
+        #     if os.path.exists("config.ini"):
+        #         path = "{}.session".format(telethon_data["username"])
+        #         if os.path.exists(path):
+        #             os.remove(path)
+        # except:
+        #     print(traceback.format_exc())
+        config_exists = os.path.exists("config.ini")
         with open('config.ini', 'w') as cf:
             cf.write("[Telegram]\n"
                      "phone = {}\n"
@@ -178,21 +186,29 @@ class PhoneWindow(QMainWindow):
         self.close()
 
 
+def alert_popup_flood_exception(e):
+    alert_window = PopUpWindow([
+        "Превышено количество некорректных запросов.",
+        "Подождите {} секунд и перезапустите приложение, либо измените конфигурацию.".format(str(e.seconds))
+    ])
+    alert_window.setWindowTitle("Ошибка")
+    alert_window.exec()
+
+
 class CodeWindow(QMainWindow):
     def __init__(self, main_window):
         super(CodeWindow, self).__init__()
 
-        try:
-            telethon_data["client"] = TelegramClient(
-                telethon_data["username"],
-                int(telethon_data["api_id"]),
-                telethon_data["api_hash"]
-            )
-            telethon_data["client"].connect()
-            telethon_data["client"].send_code_request(telethon_data["phone"])
-            telethon_data["client"].disconnect()
-        except:
-            print(traceback.format_exc())
+        # try:
+        telethon_data["client"] = TelegramClient(
+            telethon_data["username"],
+            int(telethon_data["api_id"]),
+            telethon_data["api_hash"]
+        )
+
+        telethon_data["client"].connect()
+        telethon_data["client"].send_code_request(telethon_data["phone"])
+        telethon_data["client"].disconnect()
 
         self.main_window = main_window
         self.main_window.setEnabled(False)
