@@ -30,6 +30,7 @@ telethon_data = {
 }
 
 
+
 async def dump_all_messages(channel, date_from):
     client: TelegramClient = telethon_data["client"]
 

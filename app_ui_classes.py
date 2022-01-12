@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 import re
 import traceback
 
@@ -57,6 +58,7 @@ class TelethonHandler(QObject):
 class ParseHandler(QObject):
     data = None
     thread = None
+    window = None
 
     debug_append = QtCore.pyqtSignal(str)
     enable_buttons = QtCore.pyqtSignal()
@@ -68,7 +70,8 @@ class ParseHandler(QObject):
     def activate_buttons(self):
         self.enable_buttons.emit()
 
-    def insert(self, data, thread):
+    def insert(self, window, data, thread):
+        self.window = window
         self.data = data
         self.thread = thread
 
@@ -78,7 +81,7 @@ class ParseHandler(QObject):
     def run(self):
         print("Launching parse from UI")
         print("Links: {}".format(self.data["links"]))
-        main.start(self.data, self)
+        main.start(self.data, self.window, self)
 
 
 ''' Pop-up windows section'''
@@ -151,6 +154,7 @@ class PhoneWindow(QMainWindow):
         self.setLayout(self.layout)
 
     def get_code(self):
+        self.main_window.main_widget.setEnabled(True)
         self.insert_phone.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_phone.text()))
         self.insert_api_id.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_id.text()))
         self.insert_api_hash.setText(re.sub(r'[^0-9A-Za-z]+', '', self.insert_api_hash.text()))
@@ -181,9 +185,19 @@ class PhoneWindow(QMainWindow):
             telethon_data["api_id"] = self.insert_api_id.text()
             telethon_data["api_hash"] = self.insert_api_hash.text()
             telethon_data["username"] = self.insert_username.text()
-        self.main_window.code_window = CodeWindow(self.main_window)
-        self.main_window.code_window.show()
-        self.close()
+        if config_exists:
+            self.close()
+            self.main_window.close()
+            PopUpWindow(["Чтобы изменения вступили в силу, перезапустите программу."]).exec()
+        else:
+            try:
+                self.main_window.code_window = CodeWindow(self.main_window)
+                self.main_window.code_window.show()
+                self.close()
+            except FloodWaitError as e:
+                self.main_window.main_widget.setEnabled(False)
+                self.close()
+                alert_popup_flood_exception(e)
 
 
 def alert_popup_flood_exception(e):
@@ -267,13 +281,13 @@ class PopUpWindow(QDialog):
         button = QDialogButtonBox.Ok
 
         self.button_box = QDialogButtonBox(button)
-        self.button_box.setFont(QtGui.QFont("Calibri", 10, QtGui.QFont.Bold))
+        self.button_box.setFont(QtGui.QFont("Calibri", 12, QtGui.QFont.Bold))
         self.button_box.accepted.connect(self.accept)
 
         self.layout = QVBoxLayout()
         for message in messages:
             label = QtWidgets.QLabel(message)
-            label.setFont(QtGui.QFont("Calibri", 10))
+            label.setFont(QtGui.QFont("Calibri", 12))
             self.layout.addWidget(label)
         self.layout.addWidget(self.button_box)
 

@@ -4,6 +4,7 @@ import traceback
 
 from PyQt5.QtWidgets import QApplication
 from telethon import TelegramClient
+from telethon.errors import FloodWaitError
 
 import app_ui
 import app_ui_classes
@@ -18,7 +19,7 @@ def main():
     sys.exit(app.exec_())
 
 
-async def parse(data, handler):
+async def parse(data, window, handler):
     handler.add_debug("Запуск")
     try:
         print("Connecting...")
@@ -28,7 +29,10 @@ async def parse(data, handler):
             int(telethon_data["api_id"]),
             telethon_data["api_hash"]
         )
-        await telethon_data["client"].start()
+        await telethon_data["client"].start(telethon_data["phone"])
+    except FloodWaitError as e:
+        app_ui_classes.alert_popup_flood_exception(e)
+        window.main_widget.setEnadled(False)
     except:
         handler.add_debug(traceback.format_exc())
 
@@ -75,8 +79,8 @@ async def parse(data, handler):
     handler.thread.terminate()
 
 
-def start(data, handler):
-    asyncio.run(parse(data, handler))
+def start(data, window, handler):
+    asyncio.run(parse(data, window, handler))
 
 
 if __name__ == "__main__":
