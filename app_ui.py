@@ -43,7 +43,6 @@ class MainWindow(QMainWindow):
 
         # Если захотим сделать лого
         self.setWindowIcon(QtGui.QIcon("images/icon.png"))
-
         self.begin_row_quantity = 15
         self.row_counter = 0
         self.main_font_big = QtGui.QFont("Calibri", 12, QtGui.QFont.Bold)
@@ -407,6 +406,9 @@ class MainWindow(QMainWindow):
         self.menu_bar.addAction(self.menu_file.menuAction())
 
     def ask_file(self):
+        if not self.main_widget.isEnabled():
+            app_ui_classes.PopUpWindow(["Превышено количество некорректных запросов."]).exec()
+            return
         filename = QFileDialog.getOpenFileName(self, filter="Таблицы Excel (*.xls*)")[0]
         if not filename:
             return
@@ -425,7 +427,8 @@ class MainWindow(QMainWindow):
     def add_channel(self):
         link = self.insert_link.text()
         channel = None
-
+        if not self.main_widget.isEnabled():
+            return
         try:
             async def connect():
                 telethon_data["client"] = TelegramClient(
@@ -433,7 +436,7 @@ class MainWindow(QMainWindow):
                     int(telethon_data["api_id"]),
                     telethon_data["api_hash"]
                 )
-                await telethon_data["client"].start()
+                await telethon_data["client"].start(telethon_data["phone"])
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -441,6 +444,10 @@ class MainWindow(QMainWindow):
             loop.run_until_complete(connect())
 
             channel = telethon_data["client"].get_entity(link)
+        except FloodWaitError as e:
+            app_ui_classes.alert_popup_flood_exception(e)
+            self.main_widget.setEnabled(False)
+            return
         except ValueError:
             app_ui_classes.PopUpWindow(["Канал", f'"{link}"', "не найден."]).exec()
             return
@@ -518,8 +525,16 @@ class MainWindow(QMainWindow):
 
         if not authorized:
             print("User is not authorized.\nSending code request.")
-            self.code_window = app_ui_classes.CodeWindow(self)
-            self.code_window.show()
+            try:
+                self.code_window = app_ui_classes.CodeWindow(self)
+                self.code_window.show()
+            except FloodWaitError as e:
+                app_ui_classes.alert_popup_flood_exception(e)
+                self.main_widget.setEnabled(False)
+            except:
+                print(traceback.format_exc())
+            finally:
+                telethon_data["client"].disconnect()
         else:
             print("Already authorized, no need to insert code.")
 
@@ -607,7 +622,7 @@ class MainWindow(QMainWindow):
         self.button_add_link.setEnabled(False)
         self.button_start.setEnabled(False)
 
-        self.parse_handler.insert(data, self.parse_thread)
+        self.parse_handler.insert(self, data, self.parse_thread)
         self.parse_thread.start()
 
     def collect_links(self):
