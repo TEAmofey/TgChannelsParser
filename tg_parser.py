@@ -1,5 +1,6 @@
 import json
 # для корректного переноса времени сообщений в json
+import time
 from datetime import datetime
 
 from telethon.sync import TelegramClient
@@ -15,8 +16,8 @@ from telethon.tl.functions.messages import GetHistoryRequest
 # api_hash = config['Telegram']['api_hash']
 # username = config['Telegram']['username']
 import app_ui
-
 # классы для работы с каналами
+import parse_handler
 
 telethon_data = {
     "client": None,
@@ -30,8 +31,7 @@ telethon_data = {
 }
 
 
-
-async def dump_all_messages(channel, date_from):
+async def dump_all_messages(channel, date_from, handler: parse_handler.ParseHandler):
     client: TelegramClient = telethon_data["client"]
 
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
@@ -51,6 +51,8 @@ async def dump_all_messages(channel, date_from):
             if isinstance(o, bytes):
                 return list(o)
             return json.JSONEncoder.default(self, o)
+
+    # Можно делать 30 запросов за 30 секунд
 
     while True:
         history = await client(GetHistoryRequest(
@@ -76,8 +78,18 @@ async def dump_all_messages(channel, date_from):
             all_messages.append(message.to_dict())
         offset_msg = messages[len(messages) - 1].id
         total_messages = len(all_messages)
+        print(total_messages)
+
+        info: str = 12 * ' ' + f'Найдено {total_messages} постов.'
+        if total_messages <= 100:
+            handler.add_debug(info)
+        else:
+            handler.change_posts_info(info)
+
         if total_count_limit != 0 and total_messages >= total_count_limit:
             break
+
+        time.sleep(1)
 
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder)

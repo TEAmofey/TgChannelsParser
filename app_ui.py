@@ -1,11 +1,12 @@
 import asyncio
 import configparser
 import os
+import time
 import traceback
 from datetime import datetime
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QTextCursor
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QFileDialog
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
@@ -14,6 +15,7 @@ from telethon.tl.types import Channel
 import app_ui_classes
 import import_excel
 import morph
+import parse_handler
 from tg_parser import telethon_data
 from to_excel import save_all_channels
 
@@ -228,11 +230,12 @@ class MainWindow(QMainWindow):
         self.phone_window = app_ui_classes.PhoneWindow(self)
 
         self.parse_thread = QtCore.QThread()
-        self.parse_handler = app_ui_classes.ParseHandler()
+        self.parse_handler = parse_handler.ParseHandler()
         self.parse_handler.moveToThread(self.parse_thread)
         self.parse_handler.debug_append.connect(self.add_debug)
         self.parse_handler.enable_buttons.connect(self.enable_buttons)
         self.parse_handler.save.connect(self.save_file)
+        self.parse_handler.change_posts.connect(self.change_show_posts_info)
         self.parse_thread.started.connect(self.parse_handler.run)
 
         self.first_connect_thread = QtCore.QThread()
@@ -417,6 +420,9 @@ class MainWindow(QMainWindow):
             for link in links:
                 self.insert_link.setText(link)
                 self.add_channel()
+                # Секунда между запросами на существование канала
+                time.sleep(1)
+
             self.insert_link.clear()
         except:
             app_ui_classes.PopUpWindow(["Неправильный формат таблицы."]).exec()
@@ -563,6 +569,16 @@ class MainWindow(QMainWindow):
     def ask_info(self):
         self.phone_window.show()
 
+    def delete_last_line_debug(self):
+        self.debug_text.setFocus()
+        cursor: QTextCursor = self.debug_text.textCursor()
+        self.debug_text.moveCursor(QTextCursor.End, QTextCursor.MoveAnchor)
+        self.debug_text.moveCursor(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+        self.debug_text.moveCursor(QTextCursor.End, QTextCursor.KeepAnchor)
+        self.debug_text.textCursor().removeSelectedText()
+        self.debug_text.textCursor().deletePreviousChar()
+        self.debug_text.setTextCursor(cursor)
+
     # Backend connection
 
     @QtCore.pyqtSlot(str)
@@ -575,6 +591,11 @@ class MainWindow(QMainWindow):
         self.debug_text.moveCursor(QtGui.QTextCursor.End)
         self.debug_text.ensureCursorVisible()
 
+    @QtCore.pyqtSlot(str)
+    def change_show_posts_info(self, posts):
+        self.delete_last_line_debug()
+        self.add_debug(str(posts))
+
     @QtCore.pyqtSlot()
     def enable_buttons(self):
         self.button_add_link.setEnabled(True)
@@ -586,8 +607,8 @@ class MainWindow(QMainWindow):
         if not os.path.exists("Результаты"):
             os.mkdir("Результаты")
         preferred_name = f"Результаты/Результаты от " \
-                   f"[{str(current_datetime.date()).replace('-', '_')}] " \
-                   f"{str(current_datetime.time())[:-7].replace(':', '-')}"
+                         f"[{str(current_datetime.date()).replace('-', '_')}] " \
+                         f"{str(current_datetime.time())[:-7].replace(':', '-')}"
         filename = ""
         while filename == "":
             filename = QFileDialog.getSaveFileName(self, "Caption", preferred_name, filter="Таблицы Excel (*.xlsx)")[0]
