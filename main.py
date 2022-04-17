@@ -10,9 +10,9 @@ from telethon.errors import FloodWaitError
 
 import app_ui
 import app_ui_classes
-import parse_handler
 from morph import search
 from tg_parser import telethon_data, dump_all_messages
+from thread_handlers import parse_handler
 
 
 def is_admin():
@@ -23,17 +23,22 @@ def is_admin():
 
 
 def main():
-    if is_admin():
-        app = QApplication(sys.argv)
-        window = app_ui.MainWindow()
-        window.show()
-        sys.exit(app.exec_())
-    else:
-        # Re-run the program with admin rights
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    app = QApplication(sys.argv)
+    window = app_ui.MainWindow()
+    window.show()
+    sys.exit(app.exec_())
+
+    # if is_admin():
+    #     app = QApplication(sys.argv)
+    #     window = app_ui.MainWindow()
+    #     window.show()
+    #     sys.exit(app.exec_())
+    # else:
+    #     # Re-run the program with admin rights
+    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
 
 
-async def parse(data, window, handler: parse_handler.ParseHandler):
+async def parse(data, window, thread, handler: parse_handler.ParseHandler):
     handler.add_debug("Запуск")
     try:
         print("Connecting...")
@@ -93,11 +98,11 @@ async def parse(data, window, handler: parse_handler.ParseHandler):
 
     handler.activate_buttons()
 
-    handler.thread.terminate()
+    thread.terminate()
 
 
-def start(data, window, handler):
-    asyncio.run(parse(data, window, handler))
+def start(data, window, thread, handler):
+    asyncio.run(parse(data, window, thread, handler))
 
 
 if __name__ == "__main__":

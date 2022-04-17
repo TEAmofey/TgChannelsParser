@@ -17,7 +17,7 @@ from telethon.tl.functions.messages import GetHistoryRequest
 # username = config['Telegram']['username']
 import app_ui
 # классы для работы с каналами
-import parse_handler
+from thread_handlers import parse_handler
 
 telethon_data = {
     "client": None,
