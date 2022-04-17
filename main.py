@@ -1,5 +1,7 @@
 import asyncio
+import ctypes
 import sys
+import time
 import traceback
 
 from PyQt5.QtWidgets import QApplication
@@ -8,18 +10,30 @@ from telethon.errors import FloodWaitError
 
 import app_ui
 import app_ui_classes
+import parse_handler
 from morph import search
 from tg_parser import telethon_data, dump_all_messages
 
 
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
 def main():
-    app = QApplication(sys.argv)
-    window = app_ui.MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    if is_admin():
+        app = QApplication(sys.argv)
+        window = app_ui.MainWindow()
+        window.show()
+        sys.exit(app.exec_())
+    else:
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
 
 
-async def parse(data, window, handler):
+async def parse(data, window, handler: parse_handler.ParseHandler):
     handler.add_debug("Запуск")
     try:
         print("Connecting...")
@@ -46,9 +60,12 @@ async def parse(data, window, handler):
 
                 channel = await telethon_data["client"].get_entity(link)
 
+                # Секунда между запросом на канал и началом запросов на посты
+                time.sleep(1)
+
                 handler.add_debug(8 * ' ' + "Канал найден. Скачиваем все посты...")
 
-                await dump_all_messages(channel, data["date_from"])
+                await dump_all_messages(channel, data["date_from"], handler)
 
                 handler.add_debug(8 * ' ' + "Посты скачаны. Начинаем поиск по ключевым словам.")
 
