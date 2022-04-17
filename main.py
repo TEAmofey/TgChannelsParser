@@ -23,19 +23,14 @@ def is_admin():
 
 
 def main():
-    app = QApplication(sys.argv)
-    window = app_ui.MainWindow()
-    window.show()
-    sys.exit(app.exec_())
-
-    # if is_admin():
-    #     app = QApplication(sys.argv)
-    #     window = app_ui.MainWindow()
-    #     window.show()
-    #     sys.exit(app.exec_())
-    # else:
-    #     # Re-run the program with admin rights
-    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    if is_admin():
+        app = QApplication(sys.argv)
+        window = app_ui.MainWindow()
+        window.show()
+        sys.exit(app.exec_())
+    else:
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
 
 
 async def parse(data, window, thread, handler: parse_handler.ParseHandler):
